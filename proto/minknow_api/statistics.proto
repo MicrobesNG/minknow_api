@@ -263,11 +263,13 @@ message StreamDutyTimeResponse {
     }
 
     // Map between channel state names, and a list of bucketed duty time data
-    map<string, ChannelStateData> channel_states = 2;
+    map<string, ChannelStateData> channel_states = 2 [(may_contain_user_data) = false];
 
     repeated float pore_occupancy = 3;
 }
 
+// Linting ignored for historical reasons.
+// buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
 enum ReadLengthType {
 
     // MinKNOW events are measured as reads are being read, and are available very soon after
@@ -289,6 +291,8 @@ enum ReadLengthType {
 }
 
 // The data accumulated in read length histogram buckets
+// Linting ignored for historical reasons.
+// buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
 enum BucketValueType {
 
     // Histogram buckets contain the total number of reads with lengths that fall within the
@@ -496,6 +500,8 @@ message GetReadLengthTypesResponse {
     repeated ReadLengthType available_types = 1;
 }
 
+// Linting ignored for historical reasons.
+// buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
 enum QScoreHistogramBucketValueType {
     // Histogram buckets contain the total number of reads with q-scores that fall within the
     // histogram bucket range
@@ -512,6 +518,8 @@ enum QScoreHistogramBucketValueType {
 }
 
 message QScoreHistogramKey {
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum ReadType {
         // If duplex basecalling is not enabled, equivalent to `Simplex`
         // If duplex basecalling is enabled, the sum of `Simplex` and `Duplex`
@@ -532,6 +540,8 @@ message QScoreHistogramKey {
 
     ReadType read_type = 1;
 
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum BasecallStatus {
         Any = 0;
         Skipped = 1;
@@ -630,7 +640,8 @@ message StreamQScoreHistogramResponse {
     repeated QScoreHistogramData histogram_data = 4;
 }
 
-
+// Linting ignored for historical reasons.
+// buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
 enum QAccuracyHistogramBucketValueType {
     // Histogram buckets contain the total number of reads with q-accuracy that fall within the
     // histogram bucket range
@@ -647,6 +658,8 @@ enum QAccuracyHistogramBucketValueType {
 }
 
 message QAccuracyHistogramKey {
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum ReadType {
         // If duplex basecalling is not enabled, equivalent to `Simplex`
         // If duplex basecalling is enabled, the sum of `Simplex` and `Duplex`
@@ -667,6 +680,8 @@ message QAccuracyHistogramKey {
 
     ReadType read_type = 1;
 
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum BasecallStatus {
         Any = 0;
         Skipped = 1;
@@ -773,7 +788,7 @@ message AcquisitionOutputKey {
     //   - Specify "classified" for all data which has a barcode.
     //
     // If unspecified all barcodes are returned.
-    string barcode_name = 1;
+    string barcode_name = 1 [(may_contain_user_data) = false];
 
     // Only return data for the given alignment reference.
     //
@@ -782,7 +797,7 @@ message AcquisitionOutputKey {
     //   - Specify "aligned" for all data which aligns to a reference
     //
     // If unspecified all alignment targets are returned.
-    string alignment_reference = 2;
+    string alignment_reference = 2 [(may_contain_user_data) = true];
 
     // Only return data for the given target region.
     //
@@ -795,12 +810,12 @@ message AcquisitionOutputKey {
     //   - Specify "ontarget" for all data which has a bed region.
     //
     // If unspecified all alignment regions are returned.
-    string alignment_bed_file_region = 3;
+    string alignment_bed_file_region = 3 [(may_contain_user_data) = true];
 
     // An alias to `alignment_bed_file_region`
     //
     // An optional name can be used to identify a target region in the bed file
-    string alignment_bed_file_region_name = 8;
+    string alignment_bed_file_region_name = 8 [(may_contain_user_data) = true];
 
     // Only return data for the given lamp barcode.
     //
@@ -811,7 +826,7 @@ message AcquisitionOutputKey {
     // If unspecified all lamp barcodes are returned.
     //
     // DEPRECATED 6.0: Lamp support has been removed and this option will always be ignored.
-    string lamp_barcode_id = 4;
+    string lamp_barcode_id = 4 [(may_contain_user_data) = false];
 
     // Only return data for the given lamp target.
     //
@@ -823,10 +838,10 @@ message AcquisitionOutputKey {
     // If unspecified all lamp target are returned.
     //
     // DEPRECATED 6.0: Lamp support has been removed and this option will always be ignored.
-    string lamp_target_id = 5;
+    string lamp_target_id = 5 [(may_contain_user_data) = false];
 
     // The barcode alias corresponding to the `barcode_name`
-    string barcode_alias = 6;
+    string barcode_alias = 6 [(may_contain_user_data) = true];
 
     // Only return data for the given ReadEndReason.
     //

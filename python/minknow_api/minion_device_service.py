@@ -247,7 +247,14 @@ class MinionDeviceService(object):
 
                 See ``enable_bias_voltage_lookup``.
 
-                Up to 75 values can be provided. The values have the same constraints as ``bias_voltage``.
+                Up to 128 values can be provided. The values have the same constraints as ``bias_voltage``.
+            samples_per_lut (google.protobuf.wrappers_pb2.UInt32Value, optional): The number of samples each lookup table entry is valid for.
+
+                If this value is valid then precise waveform will be enabled for the values in the bias
+                lookup table (must contain at least 2 entries). Set to zero if you want to disable this
+                feature later - if left blank this property will remain unchanged.
+
+                Must contain a value in the range [2, 64]
             channel_config_default (minknow_api.minion_device_pb2.MinionDeviceSettings.ChannelConfig, optional): The default channel configuration.
 
                 This provides the default configuration to apply to any channels not listed in
@@ -375,6 +382,10 @@ class MinionDeviceService(object):
         if "bias_voltage_lookup_table" in kwargs:
             unused_args.remove("bias_voltage_lookup_table")
             _message.settings.bias_voltage_lookup_table.extend(kwargs['bias_voltage_lookup_table'])
+
+        if "samples_per_lut" in kwargs:
+            unused_args.remove("samples_per_lut")
+            _message.settings.samples_per_lut.value = kwargs['samples_per_lut']
 
         if "channel_config_default" in kwargs:
             unused_args.remove("channel_config_default")

@@ -31,7 +31,6 @@ __all__ = [
     "GetRunInfoRequest",
     "RequestOrigin",
     "ProtocolPhaseSnapshot",
-    "Epi2meWorkflowReference",
     "AssociatedPostProcessingAnalysis",
     "PlatformQcResult",
     "HardwareCheckTemperatureResults",
@@ -55,8 +54,6 @@ __all__ = [
     "GetProtocolPurposeResponse",
     "SetProtocolPurposeRequest",
     "SetProtocolPurposeResponse",
-    "AddEpi2meWorkflowRequest",
-    "AddEpi2meWorkflowResponse",
     "ProtocolGroupIdInfo",
     "ListProtocolGroupIdsRequest",
     "ListProtocolGroupIdsResponse",
@@ -78,12 +75,17 @@ __all__ = [
     "ProtocolPhaseManagementResponse",
     "GenerateRunReportRequest",
     "GenerateRunReportResponse",
+    "WatchClearingHistoricDataRequest",
+    "ClearedHistoricData",
+    "SetProtocolRestartableRequest",
+    "SetProtocolRestartableResponse",
     "ProtocolState",
     "PROTOCOL_RUNNING",
     "PROTOCOL_WAITING_FOR_TEMPERATURE",
     "PROTOCOL_WAITING_FOR_ACQUISITION",
     "PROTOCOL_COMPLETED",
     "PROTOCOL_STOPPED_BY_USER",
+    "PROTOCOL_WAITING_FOR_RESOURCE",
     "PROTOCOL_FINISHED_WITH_ERROR",
     "PROTOCOL_FINISHED_WITH_DEVICE_ERROR",
     "PROTOCOL_FINISHED_UNABLE_TO_SEND_TELEMETRY",
@@ -93,6 +95,7 @@ __all__ = [
     "PROTOCOL_FINISHED_WITH_ERROR_BASECALL_SETTINGS",
     "PROTOCOL_FINISHED_WITH_ERROR_TEMPERATURE_REQUIRED",
     "PROTOCOL_FINISHED_WITH_ERROR_NO_DISK_SPACE",
+    "PROTOCOL_FINISHED_WITH_ERROR_TEMPERATURE_OUT_OF_RANGE",
     "PROTOCOL_FINISHED_WITH_ERROR_TEMPERATURE_HIGH",
     "PROTOCOL_FINISHED_WITH_ERROR_BASECALLER_COMMUNICATION",
     "PROTOCOL_FINISHED_WITH_NO_FLOWCELL_FOR_ACQUISITION",
@@ -949,58 +952,6 @@ class ProtocolService(object):
                               _message, _timeout,
                               [],
                               "minknow_api.protocol.ProtocolService")
-    def add_epi2me_workflow(self, _message=None, _timeout=None, **kwargs):
-        """Links an epi2me workflow reference to a run id.
-
-        Since 1.15
-
-        
-
-        Args:
-            _message (minknow_api.protocol_pb2.AddEpi2meWorkflowRequest, optional): The message to send.
-                This can be passed instead of the keyword arguments.
-            _timeout (float, optional): The call will be cancelled after this number of seconds
-                if it has not been completed.
-            run_id (str): 
-            epi2me_workflow (minknow_api.protocol_pb2.Epi2meWorkflowReference): 
-
-        Returns:
-            minknow_api.protocol_pb2.AddEpi2meWorkflowResponse
-
-        Note that the returned messages are actually wrapped in a type that collapses
-        submessages for fields marked with ``[rpc_unwrap]``.
-        """
-        if _message is not None:
-            if isinstance(_message, MessageWrapper):
-                _message = _message._message
-            return run_with_retry(self._stub.add_epi2me_workflow,
-                                  _message, _timeout,
-                                  [],
-                                  "minknow_api.protocol.ProtocolService")
-
-        unused_args = set(kwargs.keys())
-
-        _message = AddEpi2meWorkflowRequest()
-
-        if "run_id" in kwargs:
-            unused_args.remove("run_id")
-            _message.run_id = kwargs['run_id']
-        else:
-            raise ArgumentError("add_epi2me_workflow requires a 'run_id' argument")
-
-        if "epi2me_workflow" in kwargs:
-            unused_args.remove("epi2me_workflow")
-            _message.epi2me_workflow.CopyFrom(kwargs['epi2me_workflow'])
-        else:
-            raise ArgumentError("add_epi2me_workflow requires a 'epi2me_workflow' argument")
-
-        if len(unused_args) > 0:
-            raise ArgumentError("Unexpected keyword arguments to add_epi2me_workflow: '{}'".format(", ".join(unused_args)))
-
-        return run_with_retry(self._stub.add_epi2me_workflow,
-                              _message, _timeout,
-                              [],
-                              "minknow_api.protocol.ProtocolService")
     def list_protocol_group_ids(self, _message=None, _timeout=None, **kwargs):
         """List all used protocol group ids used in any previous protocol on the box.
 
@@ -1466,7 +1417,7 @@ class ProtocolService(object):
         
 
         Args:
-            iterator (iter of minknow_api.protocol_pb2.ProtocolPhaseManagementRequest): An interable that
+            iterator (iter of minknow_api.protocol_pb2.ProtocolPhaseManagementRequest): An iterable that
                 yields the messages to send.
 
         Returns:
@@ -1529,6 +1480,100 @@ class ProtocolService(object):
             raise ArgumentError("Unexpected keyword arguments to generate_run_report: '{}'".format(", ".join(unused_args)))
 
         return run_with_retry(self._stub.generate_run_report,
+                              _message, _timeout,
+                              [],
+                              "minknow_api.protocol.ProtocolService")
+    def watch_clearing_historic_data(self, _message=None, _timeout=None, **kwargs):
+        """Inform listeners of this rpc when historic protocol/acquisition data is being cleared.
+
+        Since 6.7
+
+        This RPC has no side effects. Calling it will have no effect on the state of the
+        system. It is safe to call repeatedly, or to retry on failure, although there is no
+        guarantee it will return the same information each time.
+
+        Args:
+            _message (minknow_api.protocol_pb2.WatchClearingHistoricDataRequest, optional): The message to send.
+                This can be passed instead of the keyword arguments.
+            _timeout (float, optional): The call will be cancelled after this number of seconds
+                if it has not been completed.
+                Note that this is the time until the call ends, not the time between returned
+                messages.
+
+        Returns:
+            iter of minknow_api.protocol_pb2.ClearedHistoricData
+
+        Note that the returned messages are actually wrapped in a type that collapses
+        submessages for fields marked with ``[rpc_unwrap]``.
+        """
+        if _message is not None:
+            if isinstance(_message, MessageWrapper):
+                _message = _message._message
+            return run_with_retry(self._stub.watch_clearing_historic_data,
+                                  _message, _timeout,
+                                  [],
+                                  "minknow_api.protocol.ProtocolService")
+
+        unused_args = set(kwargs.keys())
+
+        _message = WatchClearingHistoricDataRequest()
+
+        if len(unused_args) > 0:
+            raise ArgumentError("Unexpected keyword arguments to watch_clearing_historic_data: '{}'".format(", ".join(unused_args)))
+
+        return run_with_retry(self._stub.watch_clearing_historic_data,
+                              _message, _timeout,
+                              [],
+                              "minknow_api.protocol.ProtocolService")
+    def set_protocol_script_restartable(self, _message=None, _timeout=None, **kwargs):
+        """Flag that the current protocol can be restarted from this point onwards.
+
+        This state can be queried in the ProtocolRunInfo. This API is only valid to call while the sequencing script is running.
+
+        Since 6.7.
+
+        
+
+        Args:
+            _message (minknow_api.protocol_pb2.SetProtocolRestartableRequest, optional): The message to send.
+                This can be passed instead of the keyword arguments.
+            _timeout (float, optional): The call will be cancelled after this number of seconds
+                if it has not been completed.
+            protocol_run_id (str, optional): Protocol ID to flag as restartable.
+
+                This protocol must currently be active.
+            is_restartable (bool, optional): Set the protocol script as restartable.
+
+        Returns:
+            minknow_api.protocol_pb2.SetProtocolRestartableResponse
+
+        Note that the returned messages are actually wrapped in a type that collapses
+        submessages for fields marked with ``[rpc_unwrap]``.
+        """
+        if _message is not None:
+            if isinstance(_message, MessageWrapper):
+                _message = _message._message
+            return run_with_retry(self._stub.set_protocol_script_restartable,
+                                  _message, _timeout,
+                                  [],
+                                  "minknow_api.protocol.ProtocolService")
+
+        unused_args = set(kwargs.keys())
+
+        _message = SetProtocolRestartableRequest()
+
+        if "protocol_run_id" in kwargs:
+            unused_args.remove("protocol_run_id")
+            _message.protocol_run_id = kwargs['protocol_run_id']
+
+        if "is_restartable" in kwargs:
+            unused_args.remove("is_restartable")
+            _message.is_restartable = kwargs['is_restartable']
+
+        if len(unused_args) > 0:
+            raise ArgumentError("Unexpected keyword arguments to set_protocol_script_restartable: '{}'".format(", ".join(unused_args)))
+
+        return run_with_retry(self._stub.set_protocol_script_restartable,
                               _message, _timeout,
                               [],
                               "minknow_api.protocol.ProtocolService")

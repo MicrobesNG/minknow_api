@@ -123,7 +123,7 @@ class DebugService(object):
                               [],
                               "minknow_api.debug.DebugService")
     def disconnect_flow_cell(self, _message=None, _timeout=None, **kwargs):
-        """Disconnect flow cell at a position
+        """Disconnect flow cell at a simulated position
         Preconditions:
         - the position is a simulated position
         The call is ignored if the flow cell at that position is already disconnected
@@ -162,7 +162,7 @@ class DebugService(object):
                               [],
                               "minknow_api.debug.DebugService")
     def connect_flow_cell(self, _message=None, _timeout=None, **kwargs):
-        """Connect flow cell at a position
+        """Connect flow cell at a simulated position
         Preconditions:
         - the position is a simulated position
         The call is ignored if the position already has a flow cell connected
@@ -174,6 +174,28 @@ class DebugService(object):
                 This can be passed instead of the keyword arguments.
             _timeout (float, optional): The call will be cancelled after this number of seconds
                 if it has not been completed.
+            flow_cell_id (str, optional): The unique identifier for the flow cell.
+
+                This should be same as the value printed onto the flow cell casing. Not all flow cells will
+                have the flow cell ID recorded in a way that MinKNOW can read. In those cases, this will be an
+                empty string, even though the user may be able to see a printed identifier on the flow cell.
+            product_code (str, optional): The product code for the flow cell.
+
+                This should be the code displayed in the shop where the flow cell was bought. Not all
+                flow cells will have the product code recorded in a way that MinKNOW can read. In those cases,
+                this will be an empty string.
+            asic_id_str (str, optional): The unique identifier for the ASIC (formatted as string).
+
+                This is a value uniquely identifying the ASIC embedded in the flow cell. It will
+                always be set when a flow cell is present.
+            adapter_id (str, optional): The unique identifier of an attached flongle adapter.
+
+                If set then the simulated device will assume an adapter is present.
+                This is ignored if not a Simulated MinION
+            use_count (int, optional): The use count for this flow cell.
+
+                Can be set to mimic a flow cell being inserted that has exceeded the use count limit.
+            flow_cell_partner (str, optional): The partner the flow cell was produced for.
 
         Returns:
             minknow_api.debug_pb2.ConnectFlowCellResponse
@@ -192,6 +214,30 @@ class DebugService(object):
         unused_args = set(kwargs.keys())
 
         _message = ConnectFlowCellRequest()
+
+        if "flow_cell_id" in kwargs:
+            unused_args.remove("flow_cell_id")
+            _message.flow_cell_id = kwargs['flow_cell_id']
+
+        if "product_code" in kwargs:
+            unused_args.remove("product_code")
+            _message.product_code = kwargs['product_code']
+
+        if "asic_id_str" in kwargs:
+            unused_args.remove("asic_id_str")
+            _message.asic_id_str = kwargs['asic_id_str']
+
+        if "adapter_id" in kwargs:
+            unused_args.remove("adapter_id")
+            _message.adapter_id = kwargs['adapter_id']
+
+        if "use_count" in kwargs:
+            unused_args.remove("use_count")
+            _message.use_count = kwargs['use_count']
+
+        if "flow_cell_partner" in kwargs:
+            unused_args.remove("flow_cell_partner")
+            _message.flow_cell_partner = kwargs['flow_cell_partner']
 
         if len(unused_args) > 0:
             raise ArgumentError("Unexpected keyword arguments to connect_flow_cell: '{}'".format(", ".join(unused_args)))

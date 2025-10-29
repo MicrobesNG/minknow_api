@@ -1798,3 +1798,93 @@ def test_custom_config_start_protocol():
             assert len(sequencing_position.protocol_service.protocol_runs) == 1
             protocol = sequencing_position.protocol_service.protocol_runs[-1]
             assert protocol.identifier == TEST_PROTOCOL_IDENTIFIER
+
+
+def test_data_offload_start_protocol():
+    """Verify data offload arguments work as expected."""
+
+    with SequencingPositionTestServer() as sequencing_position:
+        manager_servicer = ManagerServicer(
+            [
+                manager_pb2.FlowCellPosition(
+                    name="MN00000",
+                    state=manager_pb2.FlowCellPosition.State.STATE_RUNNING,
+                    rpc_ports=manager_pb2.FlowCellPosition.RpcPorts(
+                        secure=sequencing_position.port
+                    ),
+                ),
+            ]
+        )
+        with Server([manager_servicer]) as server:
+            # Setup for experiment
+            test_flow_cell_id = "foo-bar-flow-cell"
+            sequencing_position.set_flow_cell_info(
+                FlowCellInfo(
+                    has_flow_cell=True,
+                    flow_cell_id=test_flow_cell_id,
+                    product_code=TEST_FLOW_CELL_PRODUCT_CODE,
+                )
+            )
+            sequencing_position.set_protocol_list([TEST_PROTOCOL])
+
+            assert (
+                run_start_protocol_example(
+                    server.port,
+                    [
+                        "--kit",
+                        TEST_KIT_NAME,
+                        "--position=MN00000",
+                        "--offload-location-path",
+                        "foo",
+                        "--offload-location-ids",
+                        "bar",
+                    ],
+                )[0]
+                != 0
+            )
+
+            assert (
+                run_start_protocol_example(
+                    server.port,
+                    [
+                        "--kit",
+                        TEST_KIT_NAME,
+                        "--position=MN00000",
+                        "--offload-location-ids",
+                        "foo,bar",
+                        TEST_PROTOCOL_NAME,
+                    ],
+                )[0]
+                == 0
+            )
+            offload_location_info = sequencing_position.protocol_service.protocol_runs[
+                -1
+            ].offload_location_info
+            assert sorted(offload_location_info.offload_location_ids) == sorted(
+                ["foo", "bar"]
+            )
+            assert not offload_location_info.offload_location_path
+
+            assert (
+                run_start_protocol_example(
+                    server.port,
+                    [
+                        "--kit",
+                        TEST_KIT_NAME,
+                        "--position=MN00000",
+                        "--offload-location-path",
+                        "non.existent.path",
+                        TEST_PROTOCOL_NAME,
+                    ],
+                )[0]
+                == 0
+            )
+
+            assert len(sequencing_position.protocol_service.protocol_runs) == 2
+            protocol = sequencing_position.protocol_service.protocol_runs[-1]
+            assert protocol.identifier == TEST_PROTOCOL_IDENTIFIER
+            assert (
+                protocol.offload_location_info.offload_location_path
+                == "non.existent.path"
+            )
+            assert not protocol.offload_location_info.offload_location_ids

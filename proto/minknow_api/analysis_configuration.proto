@@ -40,12 +40,12 @@ service AnalysisConfigurationService {
     //
     // To convert from a protobuf message to json:
     //
-    // >>> json_data = json_format.MessageToJson(analysis_conf_resp, preserving_proto_field_name=True, including_default_value_fields=True)
+    // >>> json_data = json_format.MessageToJson(analysis_conf_resp, preserving_proto_field_name=True, always_print_fields_with_no_presence=True)
     //
     // 'preserving_proto_field_name' is needed because json_format will try convert keys to json-standard(?) format, like converting
     // my_key to myKey, and the key names as seen in the protobuf file are important to minknow
     //
-    // 'including_default_value_fields' is needed because in proto3, primitive values that are default initialised (like a uint32 with value 0)
+    // 'always_print_fields_with_no_presence' is needed because in proto3, primitive values that are default initialised (like a uint32 with value 0)
     // will not be sent on the wire, so the value wouldn't appear when converting to json. In practice, most values are wrapper types and this
     // field won't have an affect in wrapper types, but it does affect enum types as the default initialised value is the 0th enum.
     //
@@ -258,6 +258,8 @@ message EventDetection {
 }
 
 message ReadDetectionParams {
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum ReadDetectionMode {
         none = 0;
         transition = 1;
@@ -275,7 +277,7 @@ message ReadDetectionParams {
     // The following parameters define a range of pA which a read must enter/leave in order
     // to trigger a read break.
     //
-    // The defined range can either be statically defined, or track with open_pore classifications
+    // The defined range can either be statically defined, or track with open_pore or strand classifications
     // (see ReadClassificationParams.open_pore_classifications)
 
     // The minimum level which is considered open pore (this value is relative to open_pore_default
@@ -294,9 +296,36 @@ message ReadDetectionParams {
     // open pore tracking has no value currently.
     google.protobuf.DoubleValue open_pore_default = 9;
 
-    // Minimum number of seconds events must lie within the range of open pore in order to allow
+    // Minimum number of seconds events must lie within the open pore ranges defined above in order to allow
     // a read to break.
     google.protobuf.DoubleValue open_pore_seconds_required = 10;
+
+
+    // The minimum level which is considered open pore (this value is relative to selected_default
+    // or the tracked selected section, if tracking is being used.)
+    //
+    // This value must be <= 0.0 if tracking is being used.
+    //
+    // Note cannot be used at the same time as the `open_pore_*` fields above.
+    google.protobuf.DoubleValue selected_min = 11;
+
+    // The maximum level which is considered open pore (this value is relative to selected_default
+    // or the tracked selected section, if tracking is being used.)
+    //
+    // This value must be >= 0.0 if tracking is being used.
+    //
+    // Note cannot be used at the same time as the `open_pore_*` fields above.
+    google.protobuf.DoubleValue selected_max = 12;
+
+    // The default value to use for open pore, either when tracking isn't being used, or when
+    // open pore tracking has no value currently.
+    //
+    // Note cannot be used at the same time as the `open_pore_*` fields above.
+    google.protobuf.DoubleValue selected_default = 13;
+
+    // Minimum number of seconds events must lie within the selected ranges defined above in order to allow
+    // a read to break.
+    google.protobuf.DoubleValue selected_seconds_required = 14;
 }
 
 // Parameters for filtering out reads from being written.
@@ -337,6 +366,8 @@ message ReadFilters {
 }
 
 message ReadClassificationParams {
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum Scheme {
         none = 0;
         parsed = 1;
@@ -412,6 +443,18 @@ message ReadClassificationParams {
     // By default 0.0 is used - and chunks are accepted immediately.
     google.protobuf.DoubleValue open_pore_ignore_after_reset_seconds = 8;
 
+    // A weighting figure for the exponentially weighted moving average given to the newest data when tracking selected chunks.
+    // eg. 0.7 would weight new data with 0.3 and all previous data with 0.7.
+    //
+    // By default 0.5 is used.
+    google.protobuf.DoubleValue selected_ewma_weight = 14;
+
+    // A number of seconds to ignore new chunks for after a reset occurs on a channel when tracking selected chunks
+    // this allows analysis to ignore spikes or bad data on the channel for a small section of time.
+    //
+    // By default 0.0 is used - and chunks are accepted immediately.
+    google.protobuf.DoubleValue selected_ignore_after_reset_seconds = 15;
+
     // Determine how to classify a whole read based on the strategy
     //
     // 'ultimate':      Chooses the last (ultimate) read chunk's classification
@@ -476,6 +519,9 @@ message ReadClassificationParams {
     //
     // The default weight if unspecified is 0.1.
     MetricsEwma metrics_ewma = 13;
+
+    bool disable_reset_selected_tracker_on_mux_change = 16;
+    bool disable_reset_open_pore_tracker_on_mux_change = 17;
 }
 
 message ChannelStates {
@@ -652,6 +698,8 @@ message AnalysisConfiguration {
 
     // Add read scale tracking to the pipeline.
     // If this message is unspecified, read scaling is not enabled.
+    //
+    // DEPRECATED since 6.7 read scaling is no longer supported, these parameters will be ignored.
     ReadScalingParams read_scaling = 8;
 }
 
@@ -742,7 +790,7 @@ message BarcodingConfiguration
     // The barcoding kits in use
     // One entry per kit
     // If no barcoding kits are supplied, barcoding is disabled.
-    repeated string barcoding_kits = 1;
+    repeated string barcoding_kits = 1 [(may_contain_user_data) = false];
 
     // Whether the basecaller should trim barcodes
     // If not specified, this value defaults to false (not trimming barcodes)
@@ -780,12 +828,12 @@ message AlignmentConfiguration
     // Any acceptable reference format to the basecaller can be passed here:
     //   - fasta reference file
     //   - minimap index file
-    repeated string reference_files = 1;
+    repeated string reference_files = 1 [(may_contain_user_data) = true];
 
     // Provide a bed file for use indicating areas of interest in alignment results.
     //
     // Note: alignment_index must be provided for this argument to be valid.
-    string bed_file = 2;
+    string bed_file = 2 [(may_contain_user_data) = true];
 
     // Minimum coverage for the basecaller to accept an alignment.
     //
@@ -814,7 +862,7 @@ message AlignmentConfiguration
 message LampConfiguration
 {
     // Set the lamp kit being used.
-    string lamp_kit = 1;
+    string lamp_kit = 1 [(may_contain_user_data) = false];
 
     // Optionally specify a min score to detect a valid lamp barcode.
     google.protobuf.FloatValue min_score_barcodes = 2;
@@ -856,18 +904,18 @@ message BasecallerConfiguration
         // Simplex model to use when basecalling.
         //
         // This field is not optional - empty values are invalid.
-        string simplex_model = 1;
+        string simplex_model = 1 [(may_contain_user_data) = false];
 
         // An optional list of modified bases to use, the caller is responsible
         // for ensuring these are compatible modifications.
         //
         // An empty list will lead to no modified base calling.
-        repeated string modified_models = 2;
+        repeated string modified_models = 2 [(may_contain_user_data) = false];
 
         // An optional stereo model to use for calling.
         //
         // And empty string will perform no stereo step.
-        string stereo_model = 3;
+        string stereo_model = 3 [(may_contain_user_data) = false];
     }
 
     // Choose if the basecaller is enabled or disabled.
@@ -880,7 +928,7 @@ message BasecallerConfiguration
         //
         // Filename can be absolute, or a basename (eg dna_r9.4_450bps.cfg)
         // which the basecaller should locate (see basecaller application config entry: "data_path")
-        string config_filename = 1;
+        string config_filename = 1 [(may_contain_user_data) = true];
 
         // Specify the models to run by name (see find_basecall_configurations in manager.proto)
         //
@@ -965,6 +1013,13 @@ message BasecallerConfiguration
     //
     // Since 6.3
     bool estimate_poly_a = 11;
+
+    // Configure the polya behaviour of the basecaller.
+    //
+    // This field is expected to be a path to a on the local disk that the basecaller process can read.
+    //
+    // Since 6.8
+    string poly_a_config_path = 13 [(may_contain_user_data) = true];
 }
 
 message SetBasecallerConfigurationRequest
@@ -1070,6 +1125,8 @@ message WriterConfiguration {
     // Control the type of compression applied to the read data.
     //
     // By default the vbz compressor is used (except in the single read case).
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum CompressionType {
         DefaultCompression = 0;
         ZlibCompression = 1;
@@ -1160,14 +1217,14 @@ message WriterConfiguration {
         // when the file is written.
         //
         // See file pattern attributes above.
-        string file_pattern = 8;
+        string file_pattern = 8 [(may_contain_user_data) = false];
 
         // The pattern used to find a fastq header.
         //
         // default: {read_id} runid={run_id} ch={channel_name} start_time={read_start_time}
         // Where each {xxx} section is replaced with an attribute from the minknow state
         // when the fastq is generated.
-        string fastq_header_pattern = 9;
+        string fastq_header_pattern = 9 [(may_contain_user_data) = false];
 
         oneof batch_info {
             // How many reads are placed in each batch (after batch_count reads {batch_number}
@@ -1209,14 +1266,14 @@ message WriterConfiguration {
         // Where each {xxx} section is replaced with an attribute from the minknow state when the file is written.
         //
         // See file pattern attributes above.
-        string file_pattern = 2;
+        string file_pattern = 2 [(may_contain_user_data) = false];
 
         // The pattern used to find a fastq header.
         //
         // default: {read_id} runid={run_id} ch={channel_name} start_time={read_start_time}
         // Where each {xxx} section is replaced with an attribute from the minknow state
         // when the fastq is generated.
-        string header_pattern = 3;
+        string header_pattern = 3 [(may_contain_user_data) = false];
 
         oneof batch_info {
             // How many reads are placed in each batch (after batch_count reads {batch_number}
@@ -1270,7 +1327,7 @@ message WriterConfiguration {
         // Where each {xxx} section is replaced with an attribute from the minknow state when the file is written.
         //
         // See file pattern attributes above.
-        string file_pattern = 2;
+        string file_pattern = 2 [(may_contain_user_data) = false];
 
         oneof batch_info {
             // How many reads are placed in each batch (after batch_count reads {batch_number}
@@ -1323,7 +1380,7 @@ message WriterConfiguration {
         // Where each {xxx} section is replaced with an attribute from the minknow state when the file is written.
         //
         // See file pattern attributes above.
-        string file_pattern = 2;
+        string file_pattern = 2 [(may_contain_user_data) = false];
 
         oneof batch_info {
             // How many reads are placed in each batch (after batch_count reads {batch_number}
@@ -1373,7 +1430,7 @@ message WriterConfiguration {
         // state when the file is written.
         //
         // See file pattern attributes above.
-        string file_pattern = 2;
+        string file_pattern = 2 [(may_contain_user_data) = false];
     }
 
     // Control settings for the bulk writer
@@ -1398,7 +1455,7 @@ message WriterConfiguration {
         // state when the file is written.
         //
         // See file pattern attributes above.
-        string file_pattern = 14;
+        string file_pattern = 14 [(may_contain_user_data) = false];
 
         // Raw data, stored with channel calibration data
         //
@@ -1439,6 +1496,9 @@ message WriterConfiguration {
         //
         // Stored with the frame config took effect in /Meta/User/DynamicAnalysisConfiguration
         bool dynamic_analysis_config = 15;
+
+        // Force all read metrics to be generated and written to bulk. If not, only used metrics will be generated and written to bulk.
+        bool force_all_read_metrics = 16;
     }
 
     // Control settings for the report writer
@@ -1454,7 +1514,7 @@ message WriterConfiguration {
         // state when the file is written.
         //
         // See file pattern attributes above.
-        string pdf_report_file_pattern = 1;
+        string pdf_report_file_pattern = 1 [(may_contain_user_data) = false];
 
         // The pattern used to find the json report filename. If left empty but output is
         // enabled a default pattern is used.
@@ -1464,7 +1524,7 @@ message WriterConfiguration {
         // state when the file is written.
         //
         // See file pattern attributes above.
-        string json_report_file_pattern = 2;
+        string json_report_file_pattern = 2 [(may_contain_user_data) = false];
 
         // The pattern used to find the html report filename. If left empty but output is
         // enabled a default pattern is used.
@@ -1474,7 +1534,7 @@ message WriterConfiguration {
         // state when the file is written.
         //
         // See file pattern attributes above.
-        string html_report_file_pattern = 9;
+        string html_report_file_pattern = 9 [(may_contain_user_data) = false];
 
         // The pattern used to find the markdown report filename. If left empty but output is
         // enabled a default pattern is used.
@@ -1484,7 +1544,7 @@ message WriterConfiguration {
         // state when the file is written.
         //
         // See file pattern attributes above.
-        string markdown_report_file_pattern = 8;
+        string markdown_report_file_pattern = 8 [(may_contain_user_data) = false];
 
         // The pattern used to find the duty time csv report. If left empty but output is
         // enabled a default pattern is used.
@@ -1494,7 +1554,7 @@ message WriterConfiguration {
         // state when the file is written.
         //
         // See file pattern attributes above.
-        string duty_time_report_file_pattern = 3;
+        string duty_time_report_file_pattern = 3 [(may_contain_user_data) = false];
 
         // The pattern used to find the throughput csv report. If left empty but output is
         // enabled a default pattern is used.
@@ -1504,7 +1564,7 @@ message WriterConfiguration {
         // state when the file is written.
         //
         // See file pattern attributes above.
-        string throughput_report_file_pattern = 4;
+        string throughput_report_file_pattern = 4 [(may_contain_user_data) = false];
 
         // The pattern used to find the final summary report. If left empty but output is
         // enabled a default pattern is used.
@@ -1514,7 +1574,7 @@ message WriterConfiguration {
         // state when the file is written.
         //
         // See file pattern attributes above.
-        string final_summary_report_file_pattern = 5;
+        string final_summary_report_file_pattern = 5 [(may_contain_user_data) = false];
 
         // The pattern used to name the barcode-alignment report. If left empty but output is
         // enabled a default pattern is used.
@@ -1524,7 +1584,7 @@ message WriterConfiguration {
         // state when the file is written.
         //
         // See file pattern attributes above.
-        string barcode_alignment_report_file_pattern = 6;
+        string barcode_alignment_report_file_pattern = 6 [(may_contain_user_data) = false];
 
         // The pattern used to name the sample sheet report. If left empty but output is
         // enabled a default pattern is used.
@@ -1534,7 +1594,7 @@ message WriterConfiguration {
         // state when the file is written.
         //
         // See file pattern attributes above.
-        string sample_sheet_report_file_pattern = 10;
+        string sample_sheet_report_file_pattern = 10 [(may_contain_user_data) = false];
 
         // The pattern used to suffix custom reports.
         //
@@ -1546,7 +1606,17 @@ message WriterConfiguration {
         //   - "custom_report{suffix}.txt"
         //
         // See file pattern attributes above.
-        string custom_report_suffix_pattern = 7;
+        string custom_report_suffix_pattern = 7 [(may_contain_user_data) = false];
+
+        // The pattern used to name the output hash file. If left empty but output is
+        // enabled a default pattern is used.
+        //
+        // default: output_hash_{flow_cell_id}_{daq_start_time}_{short_protocol_run_id}.csv
+        // Where each {xxx} section is replaced with an attribute from the minknow
+        // state when the file is written.
+        //
+        // See file pattern attributes above.
+        string output_hash_file_pattern = 11 [(may_contain_user_data) = false];
     }
 
     // Configuration for the fast5 writer.
@@ -1623,6 +1693,16 @@ message DynamicAnalysisConfiguration {
         repeated ChannelConductance channel_conductance = 2;
     }
 
+    message ChannelWellInfo {
+        // The channel the info describes (one based)
+        uint32 channel = 1;
+        // The well the info describes (one based)
+        uint32 well = 2;
+
+        // The default level of selected reads for tracking initialisation.
+        float selected_default = 3;
+    }
+
     // Parameters for read scale tracking:
     ReadScaleTracking read_scale_tracking = 1;
 
@@ -1638,6 +1718,8 @@ message DynamicAnalysisConfiguration {
     // This may be useful if there is a section of data that is not
     // wanted in the final output files and reports.
     repeated read_end_reason.ReadEndReason force_veto_end_reasons = 3;
+
+    repeated ChannelWellInfo channel_well_info = 4;
 }
 
 message GetDynamicAnalysisConfigurationRequest {}

@@ -17,14 +17,14 @@ def get_readme():
 
 
 INSTALL_REQUIRES = [
-    # Python 3.7 has importlib.resources built in
-    # Version 3.3 drops support for Python 3.5
-    "importlib-resources<3.3; python_version < '3.7.0'",
-    "grpcio~=1.51",
-    "numpy~=1.21",  # minknow_api.data
-    "protobuf~=4.21",
-    "packaging>=15.0",
-    "pyrfc3339~=1.1",
+    "numpy >=1.21, <3",  # minknow_api.data
+    "packaging >=15.0",
+    "pyrfc3339 >=1.1, <3",
+    # These versions are strongly linked to the grpcio-tools version used to
+    # generate code from protobuf files in .gitlab-ci.yml, see
+    # https://protobuf.dev/support/cross-version-runtime-guarantee/
+    "grpcio ~=1.63",  # must be >= grpcio-tools version
+    "protobuf >=5.26, <7",  # linked to protoc version embedded in grpcio-tools
 ]
 
 setup(

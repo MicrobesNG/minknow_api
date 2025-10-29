@@ -159,22 +159,22 @@ message ListConfigsByKitResponse {
 
 message StartBasecallingRequest {
     // User specified name to identify the basecall run.
-    string name = 12;
+    string name = 12 [(may_contain_user_data) = true];
 
     // Input directories to search for reads to be basecalled.
     //
     // Currently, only one directory can be specified, but this definition allows for multiple in
     // the future without breaking compatibility.
-    repeated string input_reads_directories = 1;
+    repeated string input_reads_directories = 1 [(may_contain_user_data) = true];
 
     // Output directory where called reads will be placed.
     //
     // Reads will be sorted into subdirectories based on the sequencing run they came from.
-    string output_reads_directory = 2;
+    string output_reads_directory = 2 [(may_contain_user_data) = true];
 
     oneof basecall_model {
         // The name of the basecalling configuration to use.
-        string configuration = 3;
+        string configuration = 3 [(may_contain_user_data) = false];
 
         // Specify the models to run by name (see find_basecall_configurations in manager.proto)
         //
@@ -245,18 +245,18 @@ message StartBasecallingResponse {
 
 message StartBarcodingRequest {
     // User specified name to identify the barcoding run.
-    string name = 11;
+    string name = 11 [(may_contain_user_data) = true];
 
     // Input directories to search for reads to be basecalled.
     //
     // Currently, only one directory can be specified, but this definition allows for multiple in
     // the future without breaking compatibility.
-    repeated string input_reads_directories = 1;
+    repeated string input_reads_directories = 1 [(may_contain_user_data) = true];
 
     // Output directory where called reads will be placed.
     //
     // Reads will be sorted into subdirectories based on the sequencing run they came from.
-    string output_reads_directory = 2;
+    string output_reads_directory = 2 [(may_contain_user_data) = true];
 
     // Enable gzip compression of output FASTQ files.
     //
@@ -289,16 +289,16 @@ message StartBarcodingResponse {
 
 message StartAlignmentRequest {
     // User specified name to identify the alignment run.
-    string name = 7;
+    string name = 7 [(may_contain_user_data) = true];
 
     // Input directories to search for reads to be aligned.
     //
     // Currently, only one directory can be specified, but this definition allows for multiple in
     // the future without breaking compatibility.
-    repeated string input_reads_directories = 1;
+    repeated string input_reads_directories = 1 [(may_contain_user_data) = true];
 
     // Output directory where aligned reads will be placed.
-    string output_reads_directory = 2;
+    string output_reads_directory = 2 [(may_contain_user_data) = true];
 
     // Recursively find fast5 files to align in the `input_reads_directories`.
     //
@@ -318,25 +318,25 @@ message StartAlignmentResponse {
 
 message StartPostProcessingProtocolRequest {
     // identifier value from a protocol returned from list_post_processing_protocols.
-    string identifier = 1;
+    string identifier = 1 [(may_contain_user_data) = false];
 
     // Optionally specify a sequencing protocol that is linked with this analysis.
-    string sequencing_protocol_run_id = 7;
+    string sequencing_protocol_run_id = 7 [(may_contain_user_data) = false];
 
     // Input directories for the protocol (omit those which the protocol doesn't require).
-    string input_fast5_directory = 2;
-    string input_fastq_directory = 3;
-    string input_bam_directory = 4;
+    string input_fast5_directory = 2 [(may_contain_user_data) = true];
+    string input_fastq_directory = 3 [(may_contain_user_data) = true];
+    string input_bam_directory = 4 [(may_contain_user_data) = true];
 
     // Path to the sample sheet output by minknow
-    string sample_sheet_path = 8;
+    string sample_sheet_path = 8 [(may_contain_user_data) = true];
 
     // Output directory where the analysed output should be written.
-    string output_directory = 5;
+    string output_directory = 5 [(may_contain_user_data) = true];
 
     // Configured values for display settings for the protocol (see basecaller.list_settings_for_protocol)
     // keys missing from the original protocol will cause errors.
-    map<string, protocol_settings.ProtocolSetting.ProtocolSettingValue> setting_values = 6;
+    map<string, protocol_settings.ProtocolSetting.ProtocolSettingValue> setting_values = 6 [(may_contain_user_data) = true];
 }
 
 message StartRequest {
@@ -494,6 +494,18 @@ message ClearInfoResponse {
 }
 
 message WatchRequest {
+    // The id of the run to watch, as specified by the return of run()
+    //
+    // If this value is empty, then will send back data of all runs, subject to
+    // what is specified in `send_finished_runs`
+    //
+    // If this value is not empty, then will return data of the requested run, even
+    // if it has finished and `send_finished_runs` is not set to true
+    //
+    // Errors:
+    //  FAILED_PRECONDITION: If there is no run with the specified id
+    string id = 2;
+
     // By default, no information will be sent about runs that were already finished when this call
     // was made. Setting this to true will cause the state of already-finished runs to be returned.
     bool send_finished_runs = 1;

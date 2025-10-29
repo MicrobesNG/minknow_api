@@ -706,6 +706,16 @@ class Basecaller(object):
                 if it has not been completed.
                 Note that this is the time until the call ends, not the time between returned
                 messages.
+            id (str, optional): The id of the run to watch, as specified by the return of run()
+
+                If this value is empty, then will send back data of all runs, subject to
+                what is specified in `send_finished_runs`
+
+                If this value is not empty, then will return data of the requested run, even
+                if it has finished and `send_finished_runs` is not set to true
+
+                Errors:
+                 FAILED_PRECONDITION: If there is no run with the specified id
             send_finished_runs (bool, optional): By default, no information will be sent about runs that were already finished when this call
                 was made. Setting this to true will cause the state of already-finished runs to be returned.
 
@@ -726,6 +736,10 @@ class Basecaller(object):
         unused_args = set(kwargs.keys())
 
         _message = WatchRequest()
+
+        if "id" in kwargs:
+            unused_args.remove("id")
+            _message.id = kwargs['id']
 
         if "send_finished_runs" in kwargs:
             unused_args.remove("send_finished_runs")

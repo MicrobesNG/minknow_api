@@ -16,7 +16,10 @@ __all__ = ["DeviceType", "get_device_type"]
 
 
 class DeviceType(Enum):
-    """The type of device."""
+    """The type of device.
+
+    Note that MINION_MK1C is deprecated (as of 6.7) and will be removed in a future release.
+    """
 
     MINION = minknow_api.device_service.GetDeviceInfoResponse.MINION
     PROMETHION = minknow_api.device_service.GetDeviceInfoResponse.PROMETHION

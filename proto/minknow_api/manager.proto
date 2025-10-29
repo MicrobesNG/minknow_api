@@ -282,40 +282,6 @@ service ManagerService {
         option deprecated = true;
     }
 
-    // List all developer API tokens.
-    //
-    // List all developer tokens, and their expiry times. Note this does not return the actual token value - this is only available at creation time.
-    //
-    // Since 4.4
-    //
-    // DEPRECATED since 5.6. Use client TLS certificates instead (see AUTH.md).
-    rpc list_developer_api_tokens(ListDeveloperApiTokensRequest) returns (ListDeveloperApiTokensResponse) {
-        option idempotency_level = IDEMPOTENT;
-        option deprecated = true;
-    }
-
-    // Create a new developer API token, with a user facing name, and optional expiry time.
-    //
-    // The response contains the requested token, which will be valid until provided expiry time.
-    //
-    // The token cannot be obtained a second time, once the CreateDeveloperApiTokenResponse is destroyed.
-    //
-    // Since 4.4
-    //
-    // DEPRECATED since 5.6. Use client TLS certificates instead (see AUTH.md).
-    rpc create_developer_api_token(CreateDeveloperApiTokenRequest) returns (CreateDeveloperApiTokenResponse) {
-        option deprecated = true;
-    }
-
-    // Remove a developer api token.
-    //
-    // Since 4.4
-    //
-    // DEPRECATED since 5.6. Use client TLS certificates instead (see AUTH.md).
-    rpc revoke_developer_api_token(RevokeDeveloperApiTokenRequest) returns (RevokeDeveloperApiTokensResponse) {
-        option deprecated = true;
-    }
-
     // Find protocols which can be run based on the current device + flowcell.
     //
     // Throws an error if there is no flow cell connected.
@@ -404,7 +370,6 @@ message DescribeHostResponse {
     // GRD-X5B001    GridION X5
     // GRD-X5B002    GridION X5
     // GRD-X5B003    GridION X5 Mk1
-    // MIN-101C      MinION Mk1C
     // PRO-PRMC01    PromethION Beta
     // PRO-PRC024    PromethION 24
     // PRO-PRC048    PromethION 48
@@ -527,8 +492,7 @@ message GetBasecallerFeaturesRequest {}
 
 message GetBasecallerFeaturesResponse {
     // Is live basecalling with adaptive sampling
-    // recommended on this hardware
-    // Currently not recommended for Apple or Mk1C
+    // recommended on this hardware.
     //
     // Since 5.9
     bool is_live_basecalling_with_adaptive_sampling_recommended = 1;
@@ -579,8 +543,7 @@ message FlowCellPosition {
     }
     // For integrated flow cell positions, indicates where it is on the sequencing unit.
     //
-    // This information is not provided for MinIONs (except for the MinION Mk1C, in which case the
-    // position is always 0, 0).
+    // This information is not provided for MinIONs.
     Location location = 2;
 
     enum State {
@@ -678,8 +641,8 @@ message FlowCellPosition {
 
     // Indicates that this is an integrated flow cell position.
     //
-    // This is true for the integrated positions on a PromethION, GridION or MinION Mk1C, and false
-    // for a MinION Mk1B.
+    // This is true for the integrated positions (such as on a PromethION or GridION), and false
+    // for positions that can be plugged in by the user (such as the P2 Solo or MinION Mk1D).
     //
     // Integrated positions are always listed, even if (due to some hardware error) they can't be
     // found. They are never in STATE_HARDWARE_REMOVED, and they always report a location.
@@ -1159,7 +1122,7 @@ message AddSimulatedDeviceRequest {
 
     // The name of the position, this must be unique and the correct format:
     //
-    // For MinION Mk1B and Mk1C: "MS" followed by five digits, eg: "MS12345".
+    // For MinION: "MS" followed by five digits, eg: "MS12345".
     // For GridION: "GS" followed by five digits, eg: "GS12345".
     // For P2 Solo: "P2S_" followed by five digits, and then "-A" or "-B" eg: "P2S_12345-A".
     //

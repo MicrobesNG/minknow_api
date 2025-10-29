@@ -4,8 +4,8 @@ Helpers for accessing the manager
 
 If you are connecting to MinKNOW externally (rather than from a protocol script), you will need to
 go via the manager. This listens on a known port, and can enumerate the available flow cell
-positions. There may only be one position (eg: on a Mk1C), or there may be many (PromethIONs can
-have 24 or 48, for example).
+positions. There may only be one position, or there may be many (PromethIONs can
+have 24, for example).
 
 This can be done with the `Manager` class in this module. The other classes this module provides are
 usually constructing using methods on ``Manager``.
@@ -26,6 +26,7 @@ import minknow_api.keystore_service
 import minknow_api.log_service
 import minknow_api.ui.sequencing_run.presets_service
 import minknow_api.hardware_check_service
+import minknow_api.notifications_service
 import minknow_api.manager_pb2 as manager_pb2
 import minknow_api.device_pb2 as device_pb2
 import minknow_api.manager_service
@@ -439,6 +440,17 @@ class Manager(ServiceBase):
             self.channel
         )
 
+    def notifications_service(
+        self,
+    ) -> minknow_api.notifications_service.NotificationsService:
+        """
+        Find the notifications service running for this manager.
+
+        Returns:
+            NotificationsService: The gRPC service for the manager level notifications service.
+        """
+        return minknow_api.notifications_service.NotificationsService(self.channel)
+
     def connect_to(self, position: str) -> Connection:
         """Connects to a position on the host
 
@@ -593,7 +605,7 @@ class Manager(ServiceBase):
         Args:
             name: name of simulated device to create. Should not exist already.
                 The format depends on the type of device being created,
-                For MinIONs and MinION-mk1Cs, "MS" followed by five digits, eg: "MS12345".
+                For MinIONs, "MS" followed by five digits, eg: "MS12345".
                 For GridIONs, "GS" followed by five digits, eg: "GS12345".
                 PromethIONs position-names have no format restriction
             type: Type of device to create.

@@ -6,9 +6,7 @@ option java_package = "com.nanoporetech.minknow_api";
 option objc_class_prefix = "MKAPI";
 option go_package ="github.com/nanoporetech/minknow_api/go/gen/debug";
 
-import "minknow_api/rpc_options.proto";
 import "google/protobuf/duration.proto";
-import "google/protobuf/wrappers.proto";
 
 service DebugService {
 
@@ -22,13 +20,13 @@ service DebugService {
         option idempotency_level = NO_SIDE_EFFECTS;
     }
 
-    // Disconnect flow cell at a position
+    // Disconnect flow cell at a simulated position
     // Preconditions:
     // - the position is a simulated position
     // The call is ignored if the flow cell at that position is already disconnected
     rpc disconnect_flow_cell(DisconnectFlowCellRequest) returns (DisconnectFlowCellResponse) {}
 
-    // Connect flow cell at a position
+    // Connect flow cell at a simulated position
     // Preconditions:
     // - the position is a simulated position
     // The call is ignored if the position already has a flow cell connected
@@ -59,7 +57,43 @@ message GetBasecallServerResponse {
 
 message DisconnectFlowCellRequest {}
 message DisconnectFlowCellResponse {}
-message ConnectFlowCellRequest {}
+
+message ConnectFlowCellRequest {
+    // The unique identifier for the flow cell.
+    //
+    // This should be same as the value printed onto the flow cell casing. Not all flow cells will
+    // have the flow cell ID recorded in a way that MinKNOW can read. In those cases, this will be an
+    // empty string, even though the user may be able to see a printed identifier on the flow cell.
+    optional string flow_cell_id = 1;
+
+    // The product code for the flow cell.
+    //
+    // This should be the code displayed in the shop where the flow cell was bought. Not all
+    // flow cells will have the product code recorded in a way that MinKNOW can read. In those cases,
+    // this will be an empty string.
+    optional string product_code = 2;
+
+    // The unique identifier for the ASIC (formatted as string).
+    //
+    // This is a value uniquely identifying the ASIC embedded in the flow cell. It will
+    // always be set when a flow cell is present.
+    optional string asic_id_str = 3;
+
+    // The unique identifier of an attached flongle adapter.
+    //
+    // If set then the simulated device will assume an adapter is present.
+    // This is ignored if not a Simulated MinION
+    optional string adapter_id = 4;
+
+    // The use count for this flow cell.
+    //
+    // Can be set to mimic a flow cell being inserted that has exceeded the use count limit.
+    optional uint32 use_count = 5;
+
+    // The partner the flow cell was produced for.
+    optional string flow_cell_partner = 6;
+}
+
 message ConnectFlowCellResponse {}
 
 message SimulateFrameLossRequest {

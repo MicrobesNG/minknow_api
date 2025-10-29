@@ -987,6 +987,7 @@ message GetExperimentYieldInfoResponse{
     message BasecallStatistics {
         uint64 reads_in_progress = 1;
         uint64 samples_in_progress = 14;
+        uint64 buffered_complete_reads = 15;
         uint64 reads_processed = 2;
         uint64 reads_skipped = 3;
         uint64 reads_force_skipped = 4;

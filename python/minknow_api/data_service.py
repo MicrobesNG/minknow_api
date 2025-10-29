@@ -668,7 +668,7 @@ class DataService(object):
         guarantee it will return the same information each time.
 
         Args:
-            iterator (iter of minknow_api.data_pb2.GetLiveReadsRequest): An interable that
+            iterator (iter of minknow_api.data_pb2.GetLiveReadsRequest): An iterable that
                 yields the messages to send.
 
         Returns:

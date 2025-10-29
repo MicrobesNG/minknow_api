@@ -7,11 +7,11 @@
 ## Overview
 
 MinKNOW is software from Oxford Nanopore Technologies plc to control its single-modecule (eg: DNA or
-RNA) sequencing devices. It comes embedded in GridION, PromethION and MinION Mk1C devices, and can
-also be installed on user PCs to run devices such as the MinION Mk1B/Mk1D and the P2 Solo. MinKNOW
-drives the sequencing hardware, analyses the data and provides the user with the results (which can
-be the raw data samples from the hardware, a DNA or RNA sequence, or the answer to a biological
-question).
+RNA) sequencing devices. It comes embedded in devices like the GridION, PromethION P24 and P2
+Integrated, and can also be installed on user PCs to run devices such as the MinION Mk1B/Mk1D and
+the P2 Solo. MinKNOW drives the sequencing hardware, analyses the data and provides the user with
+the results (which can be the raw data samples from the hardware, a DNA or RNA sequence, or the
+answer to a biological question).
 
 The files and code in this repository provide a way of automating interactions with MinKNOW,
 including gathering information about running or finished experiments, starting and stopping those

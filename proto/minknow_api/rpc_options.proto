@@ -34,6 +34,18 @@ extend google.protobuf.FieldOptions {
     // Note that you must take care to avoid name clashes - if A and B both had
     // a field with the same name, this would result in an error.
     bool rpc_unwrap = 50002;
+
+    // Indicates that this field may contain sensitive data, and must be hashed
+    // (or redacted by other means) before any message containing this field is:
+    //  * transmitted over an insecure channel
+    //  * OR consumed by third parties
+    //
+    // This obfuscation must be implemented by the process responsible
+    // for serialising the message, as it will not be performed
+    // automatically by the gRPC/protobuf system.
+    //
+    // It does not affect the wire format.
+    bool may_contain_user_data = 50004;
 }
 
 extend google.protobuf.MethodOptions {

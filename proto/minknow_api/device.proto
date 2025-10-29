@@ -363,7 +363,7 @@ enum FlowCellConnectorType {
     FCCON_NOT_SET = 0;
     // The flow cell position accepts PromethION-style flow cells.
     FCCON_PROMETHION = 1;
-    // The flow cell position accepts MinION flow cells. MinION Mk1, Mk1B and Mk1C all accept these
+    // The flow cell position accepts MinION flow cells. MinION Mk1, Mk1B and Mk1D all accept these
     // flow cells, as well as the GridION X5.
     //
     // Note that if a Flongle adapter is inserted, FCCON_FLONGLE will be returned instead.
@@ -382,6 +382,9 @@ message GetDeviceInfoRequest {}
 
 message GetDeviceInfoResponse {
     // The `PEBBLE` device type should be treated as experimental and subject to change
+    //
+    // As of version 6.7, `MINION_MK1C` value is deprecated, and will not be returned
+    // by MinKNOW. The enum value will be removed in a future release.
     enum DeviceType {
         reserved 5;
         MINION = 0;
@@ -403,7 +406,7 @@ message GetDeviceInfoResponse {
     //
     // This value will be set even if the device is not currently connected (assuming MinKNOW
     // was started by the manager service).
-    string device_id = 1;
+    string device_id = 1 [(may_contain_user_data) = false];
 
     // The type of the device.
     DeviceType device_type = 2;
@@ -456,17 +459,17 @@ message GetDeviceInfoResponse {
     // components have serial-numbers.
     message ComponentVersion {
         // Description of the component that has firmware
-        string component = 1;
+        string component = 1 [(may_contain_user_data) = false];
 
         // The firmware version, if this cannot be determined for a component where
         // the firmware version would usually be available, this will contain
         // "Unknown"
-        string version = 2;
+        string version = 2 [(may_contain_user_data) = false];
 
         // The serial-number of a component. If this in not applicable to the
         // type of component or cannot be read at the current time, then this
         // field will be blank.
-        string serial_number = 3;
+        string serial_number = 3 [(may_contain_user_data) = false];
     }
     repeated ComponentVersion firmware_version = 10;
 }
@@ -535,7 +538,7 @@ message GetFlowCellInfoResponse {
     // This should be same as the value printed onto the flow cell casing. Not all flow cells will
     // have the flow cell ID recorded in a way that MinKNOW can read. In those cases, this will be an
     // empty string, even though the user may be able to see a printed identifier on the flow cell.
-    string flow_cell_id = 4;
+    string flow_cell_id = 4 [(may_contain_user_data) = false];
 
     // The unique identifier for the ASIC (formatted as string).
     //
@@ -552,14 +555,14 @@ message GetFlowCellInfoResponse {
     //   MinKNOW versions, even with the same flow cell.
     // * An ASIC can be recycled into a new flow cell, so this identifier may be re-used in the
     //   future (although it can be considered unique for the duration of a protocol run).
-    string asic_id_str = 13;
+    string asic_id_str = 13 [(may_contain_user_data) = false];
 
     // The product code for the flow cell.
     //
     // This should be the code displayed in the shop where the flow cell was bought. Not all
     // flow cells will have the product code recorded in a way that MinKNOW can read. In those cases,
     // this will be an empty string.
-    string product_code = 6;
+    string product_code = 6 [(may_contain_user_data) = false];
 
     // A unique identifier for the flow cell, which the user can specify.
     //
@@ -569,7 +572,7 @@ message GetFlowCellInfoResponse {
     // Only alphanumeric, space, dash and underscore characters are allowed in this field.
     //
     // Since 1.12
-    string user_specified_flow_cell_id = 7;
+    string user_specified_flow_cell_id = 7 [(may_contain_user_data) = true];
 
     // A product code for the flow cell, which the user can specify.
     //
@@ -578,7 +581,7 @@ message GetFlowCellInfoResponse {
     // set_flow_cell_info.
     //
     // Since 1.12
-    string user_specified_product_code = 8;
+    string user_specified_product_code = 8 [(may_contain_user_data) = true];
 
     // Whether there is a flongle adapter.
     //
@@ -589,7 +592,7 @@ message GetFlowCellInfoResponse {
     // The unique identifier of an attached flongle adapter.
     //
     // This should be same as the value printed onto the adapter casing.
-    string adapter_id = 10;
+    string adapter_id = 10 [(may_contain_user_data) = false];
 
     // Used to make the field nullable, since the null value is not protobuf's default.
     oneof temperature_offset_nullable {
@@ -612,7 +615,7 @@ message GetFlowCellInfoResponse {
     // current hardware an empty string is returned.
     //
     // Since 1.14
-    string asic_version = 12;
+    string asic_version = 12 [(may_contain_user_data) = false];
 
     // If the configuration specifies a script to run when a flow-cell is inserted,
     // this shows if it completed successfully.
@@ -634,7 +637,7 @@ message GetFlowCellInfoResponse {
     // The flow cell barcode kit identity
     //
     // Since 5.6
-    string barcode_kit = 17;
+    string barcode_kit = 17 [(may_contain_user_data) = false];
 
     // The unique barcodes (as represented by indices between 1 to 384) that have been
     // set by calls to register_flow_cell_barcodes() on this flow cell.
@@ -650,7 +653,7 @@ message GetFlowCellInfoResponse {
     // If this field is set, it will be exactly three characters.
     //
     // Since 6.0
-    string flow_cell_partner = 19;
+    string flow_cell_partner = 19 [(may_contain_user_data) = false];
 
     // True if the flow cell is a Configuration Test Cell (CTC).
     //

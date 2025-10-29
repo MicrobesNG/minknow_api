@@ -4,7 +4,6 @@ import sys
 from getpass import getpass
 from pathlib import Path
 from typing import Optional, Tuple
-from minknow_api.tools.compatibility_helpers import datetime_utc_now
 
 try:
     from cryptography import x509
@@ -136,8 +135,11 @@ def generate_certificate_and_key(
         .issuer_name(issuer)
         .public_key(key.public_key())
         .serial_number(x509.random_serial_number())
-        .not_valid_before(datetime_utc_now())
-        .not_valid_after(datetime_utc_now() + datetime.timedelta(days=days_valid))
+        .not_valid_before(datetime.datetime.now(datetime.timezone.utc))
+        .not_valid_after(
+            datetime.datetime.now(datetime.timezone.utc)
+            + datetime.timedelta(days=days_valid)
+        )
         .add_extension(
             x509.BasicConstraints(ca=can_sign, path_length=None),
             critical=True,

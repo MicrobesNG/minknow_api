@@ -74,13 +74,13 @@ message UserMessage {
 
     // A short unique textual identifier for the message
     // Used to identify the message for translation purposes
-    string identifier = 3;
+    string identifier = 3 [(may_contain_user_data) = false];
 
     // A long user readable description of the message
-    string user_message = 4;
+    string user_message = 4 [(may_contain_user_data) = true];
 
     // Any extra data associated with the user message, as a map from key to data.
-    map<string, string> extra_data = 5;
+    map<string, string> extra_data = 5 [(may_contain_user_data) = true];
 }
 
 message SendUserMessageRequest {

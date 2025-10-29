@@ -371,7 +371,7 @@ class AcquisitionService(object):
         guarantee it will return the same information each time.
 
         Args:
-            iterator (iter of minknow_api.acquisition_pb2.WatchForStatusChangeRequest): An interable that
+            iterator (iter of minknow_api.acquisition_pb2.WatchForStatusChangeRequest): An iterable that
                 yields the messages to send.
 
         Returns:

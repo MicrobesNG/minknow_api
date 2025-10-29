@@ -11,7 +11,6 @@ import sys
 __all__ = [
     "PebbleDeviceService",
     "WaveformSettings",
-    "TimingEnginePeriods",
     "OverloadProtectionConfig",
     "DeviceSettings",
     "ChangeDeviceSettingsRequest",
@@ -127,9 +126,8 @@ class PebbleDeviceService(object):
             lpf_time_constant (minknow_api.pebble_device_pb2.DeviceSettings.LowPassFilterValue, optional): Low pass filter time constant
                 This modifies the anti-alias resistor to produce a specific time constant
                 for the low pass filter.
-            timings (minknow_api.pebble_device_pb2.TimingEnginePeriods, optional): If specified, the device will adopt these timings to set how
-                long is spent at various stages of the sampling process.
-                The message includes a way of returning to default timings.
+            timing_config (google.protobuf.wrappers_pb2.StringValue, optional): If specified, the device will adopt the timing config parameters of the specified
+                config defined in og2_asic_configs.toml
 
                 FAILED_PRECONDITION will be returned if attempting to change during acquisition
             power_save_active (google.protobuf.wrappers_pb2.BoolValue, optional): Enable ASIC power save.
@@ -200,9 +198,9 @@ class PebbleDeviceService(object):
             unused_args.remove("lpf_time_constant")
             _message.settings.lpf_time_constant = kwargs['lpf_time_constant']
 
-        if "timings" in kwargs:
-            unused_args.remove("timings")
-            _message.settings.timings.CopyFrom(kwargs['timings'])
+        if "timing_config" in kwargs:
+            unused_args.remove("timing_config")
+            _message.settings.timing_config.value = kwargs['timing_config']
 
         if "power_save_active" in kwargs:
             unused_args.remove("power_save_active")

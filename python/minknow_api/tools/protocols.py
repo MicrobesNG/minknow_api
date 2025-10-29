@@ -11,7 +11,7 @@ import grpc
 from .. import Connection
 from minknow_api import protocol_pb2, run_until_pb2, acquisition_pb2
 from minknow_api.manager_pb2 import FindBasecallConfigurationsResponse
-from minknow_api.protocol_pb2 import BarcodeUserData
+from minknow_api.protocol_pb2 import BarcodeUserData, OffloadLocationInfo
 from minknow_api.analysis_workflows_pb2 import AnalysisWorkflowRequest
 from minknow_api.tools.any_helpers import make_float_any, make_uint64_any
 
@@ -74,7 +74,7 @@ def find_protocol(
     device_connection: Connection,
     product_code: str,
     kit: str,
-    config_name: Optional[str],
+    config_name: Optional[str] = None,
     barcoding: bool = False,
     barcoding_kits: Optional[List[str]] = None,
     force_reload: bool = False,
@@ -500,6 +500,7 @@ def start_protocol(
     stop_criteria: Optional[CriteriaValues] = None,
     experiment_duration: Optional[float] = None,
     analysis_workflow_request: Optional[AnalysisWorkflowRequest] = None,
+    offload_location_info: Optional[OffloadLocationInfo] = None,
     *args,
     **kwargs,
 ) -> str:
@@ -516,6 +517,7 @@ def start_protocol(
                 Analysis workflow request message
         stop_criteria(::obj::`TargetCriteria`): When to stop the acquisition
         experiment_duration(float):             Length of the experiment in hours.
+        offload_location_info(::obj::`OffloadLocationInfo`): Data Offload location info.
         *args: Additional arguments forwarded to {make_protocol_arguments}
         **kwargs: Additional arguments forwarded to {make_protocol_arguments}
 
@@ -551,6 +553,8 @@ def start_protocol(
     additional_params = {}
     if analysis_workflow_request is not None:
         additional_params["analysis_workflow_request"] = analysis_workflow_request
+    if offload_location_info is not None:
+        additional_params["offload_location_info"] = offload_location_info
 
     result = device_connection.protocol.start_protocol(
         identifier=identifier,

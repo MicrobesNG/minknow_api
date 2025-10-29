@@ -141,12 +141,12 @@ class AnalysisConfigurationService(object):
 
         To convert from a protobuf message to json:
 
-        >>> json_data = json_format.MessageToJson(analysis_conf_resp, preserving_proto_field_name=True, including_default_value_fields=True)
+        >>> json_data = json_format.MessageToJson(analysis_conf_resp, preserving_proto_field_name=True, always_print_fields_with_no_presence=True)
 
         'preserving_proto_field_name' is needed because json_format will try convert keys to json-standard(?) format, like converting
         my_key to myKey, and the key names as seen in the protobuf file are important to minknow
 
-        'including_default_value_fields' is needed because in proto3, primitive values that are default initialised (like a uint32 with value 0)
+        'always_print_fields_with_no_presence' is needed because in proto3, primitive values that are default initialised (like a uint32 with value 0)
         will not be sent on the wire, so the value wouldn't appear when converting to json. In practice, most values are wrapper types and this
         field won't have an affect in wrapper types, but it does affect enum types as the default initialised value is the 0th enum.
 
@@ -169,6 +169,8 @@ class AnalysisConfigurationService(object):
             channel_states (minknow_api.analysis_configuration_pb2.AnalysisConfiguration.ChannelStatesEntry, optional): 
             read_scaling (minknow_api.analysis_configuration_pb2.ReadScalingParams, optional): Add read scale tracking to the pipeline.
                 If this message is unspecified, read scaling is not enabled.
+
+                DEPRECATED since 6.7 read scaling is no longer supported, these parameters will be ignored.
 
         Returns:
             minknow_api.analysis_configuration_pb2.SetAnalysisConfigurationResponse
@@ -472,6 +474,11 @@ class AnalysisConfigurationService(object):
             estimate_poly_a (bool, optional): Enable poly a tail estimation.
 
                 Since 6.3
+            poly_a_config_path (str, optional): Configure the polya behaviour of the basecaller.
+
+                This field is expected to be a path to a on the local disk that the basecaller process can read.
+
+                Since 6.8
 
         Returns:
             minknow_api.analysis_configuration_pb2.SetBasecallerConfigurationResponse
@@ -538,6 +545,10 @@ class AnalysisConfigurationService(object):
         if "estimate_poly_a" in kwargs:
             unused_args.remove("estimate_poly_a")
             _message.configs.estimate_poly_a = kwargs['estimate_poly_a']
+
+        if "poly_a_config_path" in kwargs:
+            unused_args.remove("poly_a_config_path")
+            _message.configs.poly_a_config_path = kwargs['poly_a_config_path']
 
         if len(unused_args) > 0:
             raise ArgumentError("Unexpected keyword arguments to set_basecaller_configuration: '{}'".format(", ".join(unused_args)))
@@ -636,6 +647,11 @@ class AnalysisConfigurationService(object):
             estimate_poly_a (bool, optional): Enable poly a tail estimation.
 
                 Since 6.3
+            poly_a_config_path (str, optional): Configure the polya behaviour of the basecaller.
+
+                This field is expected to be a path to a on the local disk that the basecaller process can read.
+
+                Since 6.8
 
         Returns:
             minknow_api.analysis_configuration_pb2.SetBasecallerConfigurationResponse
@@ -702,6 +718,10 @@ class AnalysisConfigurationService(object):
         if "estimate_poly_a" in kwargs:
             unused_args.remove("estimate_poly_a")
             _message.configs.estimate_poly_a = kwargs['estimate_poly_a']
+
+        if "poly_a_config_path" in kwargs:
+            unused_args.remove("poly_a_config_path")
+            _message.configs.poly_a_config_path = kwargs['poly_a_config_path']
 
         if len(unused_args) > 0:
             raise ArgumentError("Unexpected keyword arguments to preload_basecaller_configuration: '{}'".format(", ".join(unused_args)))
@@ -1128,6 +1148,7 @@ class AnalysisConfigurationService(object):
 
                 This may be useful if there is a section of data that is not
                 wanted in the final output files and reports.
+            channel_well_info (minknow_api.analysis_configuration_pb2.DynamicAnalysisConfiguration.ChannelWellInfo, optional): 
 
         Returns:
             minknow_api.analysis_configuration_pb2.SetDynamicAnalysisConfigurationResponse
@@ -1158,6 +1179,10 @@ class AnalysisConfigurationService(object):
         if "force_veto_end_reasons" in kwargs:
             unused_args.remove("force_veto_end_reasons")
             _message.force_veto_end_reasons.extend(kwargs['force_veto_end_reasons'])
+
+        if "channel_well_info" in kwargs:
+            unused_args.remove("channel_well_info")
+            _message.channel_well_info.extend(kwargs['channel_well_info'])
 
         if len(unused_args) > 0:
             raise ArgumentError("Unexpected keyword arguments to set_dynamic_analysis_configuration: '{}'".format(", ".join(unused_args)))

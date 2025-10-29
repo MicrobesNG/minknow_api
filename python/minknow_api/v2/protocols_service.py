@@ -16,6 +16,8 @@ __all__ = [
     "StartProtocolsResponse",
     "StopProtocolsRequest",
     "StopProtocolsResponse",
+    "GroupFilteringInfo",
+    "ListGroupIdsRequest",
 ]
 
 def run_with_retry(method, message, timeout, unwraps, full_name):
@@ -429,6 +431,51 @@ class ProtocolsService(object):
             raise ArgumentError("Unexpected keyword arguments to get_acquisition_info: '{}'".format(", ".join(unused_args)))
 
         return run_with_retry(self._stub.get_acquisition_info,
+                              _message, _timeout,
+                              [],
+                              "minknow_api.v2.protocol.ProtocolsService")
+    def list_protocol_group_ids(self, _message=None, _timeout=None, **kwargs):
+        """List all used protocol group ids used in any previous protocol on the box.
+
+        Since 6.8
+
+        This RPC has no side effects. Calling it will have no effect on the state of the
+        system. It is safe to call repeatedly, or to retry on failure, although there is no
+        guarantee it will return the same information each time.
+
+        Args:
+            _message (minknow_api.v2.protocols_pb2.ListGroupIdsRequest, optional): The message to send.
+                This can be passed instead of the keyword arguments.
+            _timeout (float, optional): The call will be cancelled after this number of seconds
+                if it has not been completed.
+            filter_info (minknow_api.v2.protocols_pb2.GroupFilteringInfo, optional): 
+
+        Returns:
+            minknow_api.protocol_pb2.ListProtocolGroupIdsResponse
+
+        Note that the returned messages are actually wrapped in a type that collapses
+        submessages for fields marked with ``[rpc_unwrap]``.
+        """
+        if _message is not None:
+            if isinstance(_message, MessageWrapper):
+                _message = _message._message
+            return run_with_retry(self._stub.list_protocol_group_ids,
+                                  _message, _timeout,
+                                  [],
+                                  "minknow_api.v2.protocol.ProtocolsService")
+
+        unused_args = set(kwargs.keys())
+
+        _message = minknow_api.protocol_pb2.ListGroupIdsRequest()
+
+        if "filter_info" in kwargs:
+            unused_args.remove("filter_info")
+            _message.filter_info.CopyFrom(kwargs['filter_info'])
+
+        if len(unused_args) > 0:
+            raise ArgumentError("Unexpected keyword arguments to list_protocol_group_ids: '{}'".format(", ".join(unused_args)))
+
+        return run_with_retry(self._stub.list_protocol_group_ids,
                               _message, _timeout,
                               [],
                               "minknow_api.v2.protocol.ProtocolsService")

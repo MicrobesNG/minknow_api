@@ -46,6 +46,8 @@ from minknow_api.analysis_workflows_pb2 import AnalysisWorkflowRequest
 # We need `find_protocol` to search for the required protocol given a kit + product code.
 from minknow_api.tools import protocols
 
+from minknow_api.protocol_pb2 import OffloadLocationInfo
+
 
 def _load_file(path: str) -> bytes:
     with open(path, "rb") as f:
@@ -326,6 +328,21 @@ def parse_args():
         "--workflow_json_string",
         type=str,
         help="Input JSON string to use for analysis workflow request",
+    )
+
+    # Data Offload supports providing either a list of offload location ids
+    # or a location path
+    offload_args = parser.add_mutually_exclusive_group()
+    offload_args.add_argument(
+        "--offload-location-ids",
+        type=lambda loc: loc.split(","),
+        help="Comma-separated list of remote offload location ids to offload protocol output files to",
+    )
+
+    offload_args.add_argument(
+        "--offload-location-path",
+        type=str,
+        help="Path on local internal or external drive to store protocol output files to",
     )
 
     parser.add_argument(
@@ -1017,6 +1034,16 @@ def main():
                 min_qscore=min_qscore,
             )
 
+        offload_location_info = None
+        if args.offload_location_ids:
+            offload_location_info = OffloadLocationInfo(
+                offload_location_ids=args.offload_location_ids
+            )
+        elif args.offload_location_path:
+            offload_location_info = OffloadLocationInfo(
+                offload_location_path=args.offload_location_path
+            )
+
         run_id = protocols.start_protocol(
             position_connection,
             identifier=spec.protocol_id,
@@ -1034,6 +1061,7 @@ def main():
             mux_scan_period=args.mux_scan_period,
             stop_criteria=stop_criteria,
             simulation_path=args.simulation,
+            offload_location_info=offload_location_info,
             args=args.extra_args,  # Any extra args passed.
         )
 

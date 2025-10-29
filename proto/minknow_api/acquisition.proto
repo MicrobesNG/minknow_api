@@ -521,6 +521,17 @@ message AcquisitionYieldSummary
     // Number of reads which have been skipped
     int64 basecalled_skipped_read_count = 10;
 
+    // Number of reads which were skipped because they had no basecalled reads
+    // of useful length.
+    //
+    // These reads are not included in:
+    // - `basecalled_pass_read_count`
+    // - `basecalled_fail_read_count`
+    // - `basecalled_skipped_read_count`
+    //
+    // They have been processed and deemed not worth serialisation.
+    int64 basecalled_reads_discarded_only_short = 26;
+
     // Number of bases which have been called and classed as pass.
     int64 basecalled_pass_bases = 5;
 
@@ -619,15 +630,15 @@ message AcquisitionWriterSummary
 message ChannelStateInfo {
     message Style {
         // The human-readable name to display when rendering this channel state or group.
-        string label = 1;
+        string label = 1 [(may_contain_user_data) = false];
         // A sentence describing the meaning of the channel state or group.
         //
         // This can be used as a tooltip, for example.
-        string description = 2;
+        string description = 2 [(may_contain_user_data) = false];
         // The colour to use when rendering this channel state or group.
         //
         // This is a six-digit hex string describing an RGB colour (eg: "ff00ff" for purple).
-        string colour = 3;
+        string colour = 3 [(may_contain_user_data) = false];
     }
     message ChannelState {
         // The numeric identifier of the state.
@@ -637,7 +648,7 @@ message ChannelStateInfo {
         // The internal name of the state.
         //
         // This is what is reported in any other APIs that return a channel state name.
-        string name = 2;
+        string name = 2 [(may_contain_user_data) = false];
         // How to render the channel state in a graphical user interface.
         //
         // Note that the style may be missing from some channel states (such as the ones that are
@@ -650,7 +661,7 @@ message ChannelStateInfo {
     }
     message Group {
         // The name of the group.
-        string name = 1;
+        string name = 1 [(may_contain_user_data) = false];
         // How to render the group in a graphical user interface.
         //
         // Note that the style may be missing from some groups (such as the ones that are built in
@@ -678,7 +689,7 @@ message AcquisitionConfigSummary {
     bool basecalling_enabled = 1;
     oneof basecall_model {
         // Basecalling configuration filename (if basecalling enabled)
-        string basecalling_config_filename = 16;
+        string basecalling_config_filename = 16 [(may_contain_user_data) = true];
 
         // Specify the models to run by name (see find_basecall_configurations in manager.proto)
         //
@@ -690,21 +701,21 @@ message AcquisitionConfigSummary {
 
     // Basecalling model version (empty if basecalling not enabled)
     // Since 6.0
-    string basecalling_model_version = 24;
+    string basecalling_model_version = 24 [(may_contain_user_data) = false];
     // Was the experiment a duplex basecalling experiment (false if basecalling is disabled)
     bool duplex_enabled = 23;
 
     // Is barcoding enabled for the run
     bool barcoding_enabled = 13;
     /// Barcoding kit(s) used (if barcoding enabled)
-    repeated string barcoding_kits = 17;
+    repeated string barcoding_kits = 17 [(may_contain_user_data) = false];
 
     // Is alignment enabled for the run
     bool alignment_enabled = 14;
     // Alignment reference file(s) used (if alignment enabled)
-    repeated string alignment_reference_files = 18;
+    repeated string alignment_reference_files = 18 [(may_contain_user_data) = true];
     // bed file used (if alignment enabled, and bed file specified)
-    string alignment_bed_file = 19;
+    string alignment_bed_file = 19 [(may_contain_user_data) = true];
 
 
     // Is lamp enabled for the run
@@ -714,17 +725,17 @@ message AcquisitionConfigSummary {
     // The LAMP kit used (if LAMP enabled)
     //
     // DEPRECATED 6.0: Lamp support has been removed and this value will always be empty.
-    string lamp_kit = 20;
+    string lamp_kit = 20 [(may_contain_user_data) = false];
 
     // Root directory reads were written to for the run.
     //
     // Empty if no reads were enabled.
-    string reads_directory = 2;
+    string reads_directory = 2 [(may_contain_user_data) = true];
     // Directories reads are written to if the reads_directory is on the network
     // and writes to it fail.
     //
     // Empty if no reads were enabled.
-    repeated string reads_fallback_directories = 3;
+    repeated string reads_fallback_directories = 3 [(may_contain_user_data) = true];
 
     // Determine if fast5 reads were enabled for the run.
     bool fast5_reads_enabled = 4;
@@ -742,7 +753,7 @@ message AcquisitionConfigSummary {
     // The path of the bulk file for the run.
     //
     // Empty if no reads were enabled.
-    string bulk_file_path = 7;
+    string bulk_file_path = 7 [(may_contain_user_data) = true];
     // Find if the bulk writer was enabled for a run.
     bool bulk_file_enabled = 8;
 
@@ -770,17 +781,17 @@ message MuxScanMetadata {
     // Presentation information for a category or group.
     message Style {
         // The human-readable name to display when rendering this category or group.
-        string label = 1;
+        string label = 1 [(may_contain_user_data) = false];
 
         // A sentence describing the meaning of the category or group.
         //
         // This can be used as a tooltip, for example.
-        string description = 2;
+        string description = 2 [(may_contain_user_data) = false];
 
         // The colour to use when rendering this category or group.
         //
         // This is a six-digit hex string describing an RGB colour (eg: "ff0000" for red).
-        string colour = 3;
+        string colour = 3 [(may_contain_user_data) = false];
     }
     // A category that a channel mux can be assigned.
     message Category {
@@ -789,7 +800,7 @@ message MuxScanMetadata {
         // This is the value that will be in the `MuxScanResult.counts` field.
         //
         // The user should not be shown this. Instead, `style.label` should be displayed.
-        string name = 1;
+        string name = 1 [(may_contain_user_data) = false];
 
         // How to render the category in a graphical user interface.
         Style style = 2;
@@ -799,7 +810,7 @@ message MuxScanMetadata {
     }
     message CategoryGroup {
         // The name of the group.
-        string name = 1;
+        string name = 1 [(may_contain_user_data) = false];
 
         // How to render the group in a graphical user interface.
         Style style = 2;
@@ -832,7 +843,7 @@ message MuxScanResult {
     // number of muxes on each channel (eg: 512x4=2048 on a MinION Mk1B without a flongle adapter).
     //
     // eg. 'sequencing': 1500
-    map<string, uint32> counts = 1;
+    map<string, uint32> counts = 1 [(may_contain_user_data) = false];
 
     // When this mux scan result was added (Seconds since the start of the acquisition).
     uint64 mux_scan_timestamp = 2;
@@ -888,7 +899,7 @@ message AcquisitionRunInfo {
     // This is guaranteed to be made of ASCII characters, and at
     // most 40 characters. It is globally unique across all
     // acquisitions on all MinKNOW instances.
-    string run_id = 1;
+    string run_id = 1 [(may_contain_user_data) = false];
 
     // Current startup task (or STARTUP_UNKNOWN if not starting up).
     StartupState startup_state = 12;
@@ -976,8 +987,9 @@ message WatchCurrentAcquisitionRunRequest {
 }
 
 message SetSignalReaderRequest {
-
     // Available signal reader types
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_NO_ALLOW_ALIAS
     enum SignalReaderType {
         option allow_alias = true;
 

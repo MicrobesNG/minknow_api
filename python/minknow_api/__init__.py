@@ -112,7 +112,6 @@ from typing import Any, Dict, Optional, Tuple, Union, List
 
 import grpc
 import pyrfc3339
-import pytz
 
 from . import data
 
@@ -285,12 +284,10 @@ class LocalAuthTokenCredentials(grpc.AuthMetadataPlugin):
     def __call__(self, context, callback):
         metadata = None
         if self.token:
-            try:
-                now = datetime.datetime.now(datetime.UTC)
-            except AttributeError:
-                now = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
-            if now >= self.expires_at:
-                self._refresh_local_token()
+            if self.expires_at:
+                now = datetime.datetime.now(datetime.timezone.utc)
+                if now >= self.expires_at:
+                    self._refresh_local_token()
 
             metadata = (("local-auth", self.token),)
 

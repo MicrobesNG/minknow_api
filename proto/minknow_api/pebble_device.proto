@@ -54,41 +54,6 @@ message WaveformSettings {
     google.protobuf.UInt32Value samples_per_entry = 2;
 }
 
-message TimingEnginePeriods {
-    message TimingState {
-        // The duration spent in each state is 1 more TEclock period than set
-        // in the associated register, so setting 1 results in a delay of 2 clock periods
-        google.protobuf.Int32Value duration = 1;
-
-        // The mask is built up of 7 user settable timing signals
-        // bit 0: INT_RESET
-        // bit 1: CDS_SAMPLE
-        // bit 2: CDS_RESET
-        // bit 3: DIG_ENABLE
-        // bit 4: CDS_SELECT
-        // bit 5: SYNC_MASTER
-        // bit 6: CML_ENABLE
-        google.protobuf.Int32Value mask = 2;
-    }
-
-    // There are 16 timing engine states each broken down in to duration
-    // and timing signal mask. If any of the states are omitted then the defaults will
-    // be used.
-    //
-    // Note: Setting duration of state 4 and 12 has no affect as it
-    // is modified by MinKNOW based on the sample rate. Reading
-    // it will return the chosen duration
-
-    // Zero index based map [0-15] of up to 16 timing engine states
-    map<uint32, TimingState> states = 3;
-
-    // If written true, other fields will be ignored and the hardware will use
-    // default timings. When read will return true if previously set true,
-    // it will not tell you if the timing periods you previously entered
-    // are the same as the default values.
-    google.protobuf.BoolValue use_default_values = 4;
-}
-
 message OverloadProtectionConfig
 {
     // Set to enable or disable hardware based overload protection (saturation).
@@ -116,7 +81,8 @@ message OverloadProtectionConfig
 }
 
 message DeviceSettings {
-
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum RegenCurrentRange {
         REGEN_RANGE_KEEP = 0;
         REGEN_RANGE_0_5nA_STEP_0_1nA = 1;
@@ -125,6 +91,8 @@ message DeviceSettings {
         REGEN_RANGE_2_0nA_STEP_0_4nA = 4;
     }
 
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum LowPassFilterValue {
         LPF_KEEP = 0;
         LPF_0_us = 1;
@@ -223,12 +191,11 @@ message DeviceSettings {
     // for the low pass filter.
     LowPassFilterValue lpf_time_constant = 11;
 
-    // If specified, the device will adopt these timings to set how
-    // long is spent at various stages of the sampling process.
-    // The message includes a way of returning to default timings.
+    // If specified, the device will adopt the timing config parameters of the specified
+    // config defined in og2_asic_configs.toml
     //
     // FAILED_PRECONDITION will be returned if attempting to change during acquisition
-    TimingEnginePeriods timings = 12;
+    google.protobuf.StringValue timing_config = 12;
 
     // Enable ASIC power save.
     //
@@ -238,7 +205,6 @@ message DeviceSettings {
 
     // Settings for the hardware based saturation/overload protection (spike suppression)
     OverloadProtectionConfig overload_protection = 14;
-
 }
 
 message ChangeDeviceSettingsRequest {

@@ -196,7 +196,7 @@ service RunUntilService {
 // This message is deliberately flexible, to allow custom Run-Until Scripts to expand the range
 // and types of available criteria.
 message CriteriaValues {
-    map<string, google.protobuf.Any> criteria = 1;
+    map<string, google.protobuf.Any> criteria = 1 [(may_contain_user_data) = false];
 }
 
 message WriteTargetCriteriaRequest {
@@ -262,7 +262,7 @@ message EstimatedTimeRemainingUpdate {
     // Only criteria for which an update is being provided are contained in the map.
     //
     message EstimatedTimes {
-        map<string, EstimatedTime> estimated_times = 1;
+        map<string, EstimatedTime> estimated_times = 1 [(may_contain_user_data) = false];
     }
 
     EstimatedTimes pause_estimates = 1;
@@ -273,6 +273,8 @@ message EstimatedTimeRemainingUpdate {
 //
 // When a request is sent using `write_updates()`, MinKNOW performs the specified action.
 message ActionUpdate {
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum Action {
         // No action
         NoAction = 0;
@@ -302,7 +304,7 @@ message ActionUpdate {
     Action action = 1;
 
     // The criteria associated with this action
-    string criteria = 2;
+    string criteria = 2 [(may_contain_user_data) = false];
 }
 
 message ScriptUpdate {
@@ -322,12 +324,12 @@ message ErrorUpdate {
     // Indicates that one or more of the supplied target criteria is not recognised by the
     //  Run-Until Script.  Unrecognised target criteria will not be used to pause or stop the run.
     message InvalidCriteria {
-        repeated string name = 1;
+        repeated string name = 1 [(may_contain_user_data) = false];
     }
 
     // An error that is not covered by one of the other error types, above.
     message OtherError {
-        string message = 1;
+        string message = 1 [(may_contain_user_data) = false];
     }
 
     oneof error {
@@ -349,7 +351,7 @@ message Update {
     ErrorUpdate error_update = 14;
 
     // Space for custom updates from custom Run-Until scripts
-    repeated google.protobuf.Any other = 15;
+    repeated google.protobuf.Any other = 15 [(may_contain_user_data) = false];
 }
 
 message WriteUpdatesRequest {

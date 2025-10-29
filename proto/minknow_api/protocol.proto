@@ -187,11 +187,6 @@ service ProtocolService {
         option idempotency_level = IDEMPOTENT;
     }
 
-    // Links an epi2me workflow reference to a run id.
-    //
-    // Since 1.15
-    rpc add_epi2me_workflow (AddEpi2meWorkflowRequest) returns (AddEpi2meWorkflowResponse) {}
-
     // List all used protocol group ids used in any previous protocol on the box.
     //
     // Since 3.2
@@ -290,7 +285,6 @@ service ProtocolService {
     rpc protocol_phase_management (stream ProtocolPhaseManagementRequest)
                           returns (stream ProtocolPhaseManagementResponse) {}
 
-
     // Generate a run report and return the report data.
     //
     // If the protocol selected for report generation is already complete the report is a completed report, otherwise
@@ -300,9 +294,26 @@ service ProtocolService {
     rpc generate_run_report(GenerateRunReportRequest) returns (stream GenerateRunReportResponse) {
         option idempotency_level = IDEMPOTENT;
     }
+
+    // Inform listeners of this rpc when historic protocol/acquisition data is being cleared.
+    //
+    // Since 6.7
+    rpc watch_clearing_historic_data(WatchClearingHistoricDataRequest) returns (stream ClearedHistoricData) {
+        option idempotency_level = NO_SIDE_EFFECTS;
+    }
+
+    // Flag that the current protocol can be restarted from this point onwards.
+    //
+    // This state can be queried in the ProtocolRunInfo. This API is only valid to call while the sequencing script is running.
+    //
+    // Since 6.7.
+    rpc set_protocol_script_restartable(SetProtocolRestartableRequest) returns (SetProtocolRestartableResponse) {}
+
 }
 
 message BarcodeUserData {
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum SampleType {
         // The barcode sample is a real sample being tested.
         test_sample = 0;
@@ -327,46 +338,46 @@ message BarcodeUserData {
     //
     // Acts as the external barcode name `barcode_name_internal` is
     // also set for dual barcoding
-    string barcode_name = 1;
+    string barcode_name = 1 [(may_contain_user_data) = false];
 
     // The internal barcode name if using dual barcode
-    string barcode_name_internal = 5;
+    string barcode_name_internal = 5 [(may_contain_user_data) = false];
 
     // Lamp barcode id the user data applies to, eg: "FIP04"
     //
     // DEPRECATED 6.0: Lamp support has been removed and this value will always be empty.
-    string lamp_barcode_id = 2;
+    string lamp_barcode_id = 2 [(may_contain_user_data) = false];
 
     // User defined string alias for the barcode.
-    string alias = 3;
+    string alias = 3 [(may_contain_user_data) = true];
 
     // Sample type grouping for the barcode.
     SampleType type = 4;
 
     // Extra context per barcode
-    map<string, string> passenger_info  = 6;
+    map<string, string> passenger_info = 6 [(may_contain_user_data) = true];
 }
 
 message KitInfo {
     // The sequencing kit used to select the protocol e.g. "SQK-LSK108"
-    string sequencing_kit = 1;
+    string sequencing_kit = 1 [(may_contain_user_data) = false];
 
     // The expansion barcoding kits that the protocol supports e.g. "EXP-NBD104"
-    repeated string barcode_expansion_kits = 2;
+    repeated string barcode_expansion_kits = 2 [(may_contain_user_data) = false];
 }
 
 message ProtocolRunUserInfo {
     // The group which the experiment should be held in.
     //
     // note: This value could be unset if a user did not specify a group_id when starting the protocol.
-    google.protobuf.StringValue protocol_group_id = 1;
+    google.protobuf.StringValue protocol_group_id = 1 [(may_contain_user_data) = true];
 
     // sample_id created by the user
-    google.protobuf.StringValue sample_id = 2;
+    google.protobuf.StringValue sample_id = 2 [(may_contain_user_data) = true];
 
     // Ordinarily, data is split into separate top-level per-protocol directories
     //
-    // If `pooled_output` is set to true, the splitting into per-protocol directories happens
+    // If `pool_output` is set to true, the splitting into per-protocol directories happens
     // at the bottom level instead.  This in turn means that the output files for protocols with
     // the same `protocol_group_id` and `sample_id` are stored next to each other, in
     // subdirectories under the output type directory
@@ -380,10 +391,10 @@ message ProtocolRunUserInfo {
     repeated BarcodeUserData barcode_user_info = 3;
 
     // user_specified_flow_cell_id created by the user
-    google.protobuf.StringValue user_specified_flow_cell_id = 4;
+    google.protobuf.StringValue user_specified_flow_cell_id = 4 [(may_contain_user_data) = true];
 
     // user_specified_product_code created by the user
-    google.protobuf.StringValue user_specified_product_code = 5;
+    google.protobuf.StringValue user_specified_product_code = 5 [(may_contain_user_data) = true];
 
     // Kit information the user requested
     KitInfo kit_info = 6;
@@ -520,7 +531,7 @@ message ListProtocolsRequest {
 message ProtocolInfo {
     message TagValue {
         oneof tag_value {
-            string string_value = 1;
+            string string_value = 1 [(may_contain_user_data) = true];
             bool bool_value = 2;
             int64 int_value = 3;
             double double_value = 4;
@@ -530,12 +541,12 @@ message ProtocolInfo {
     }
     message TagExtractionResult {
         bool success = 1;
-        string error_report = 2;
+        string error_report = 2 [(may_contain_user_data) = false];
     }
 
-    string identifier = 1;
-    map<string,TagValue> tags = 2;
-    string name = 3;
+    string identifier = 1 [(may_contain_user_data) = true];
+    map<string,TagValue> tags = 2 [(may_contain_user_data) = true];
+    string name = 3 [(may_contain_user_data) = true];
     TagExtractionResult tag_extraction_result = 4;
 }
 
@@ -588,7 +599,10 @@ message GetRunInfoRequest {
     string run_id = 1;
 }
 
+// buf:lint:ignore ENUM_NO_ALLOW_ALIAS
 enum ProtocolState {
+    option allow_alias = true;
+
     // The protocol is still running.
     PROTOCOL_RUNNING = 0;
 
@@ -608,6 +622,9 @@ enum ProtocolState {
 
     // The protocol was terminated by the user.
     PROTOCOL_STOPPED_BY_USER = 2;
+
+    // The protocol is waiting for system resources to become available.
+    PROTOCOL_WAITING_FOR_RESOURCE = 10;
 
     // The protocol finished on its own and reported an error.
     //
@@ -643,8 +660,10 @@ enum ProtocolState {
     // The protocol was terminated due to insufficient disk space
     PROTOCOL_FINISHED_WITH_ERROR_NO_DISK_SPACE = 23;            // Exit with code 23
 
-    // The protocol was terminated due to a high temperature issue
-    // Since 5.9
+    // The protocol was terminated due to an out of range temperature issue (too high or too low)
+    // Since 6.7
+    PROTOCOL_FINISHED_WITH_ERROR_TEMPERATURE_OUT_OF_RANGE = 25; // Exit with code 25
+    // DEPRECATED: 6.7 - use PROTOCOL_FINISHED_WITH_ERROR_TEMPERATURE_OUT_OF_RANGE instead.
     PROTOCOL_FINISHED_WITH_ERROR_TEMPERATURE_HIGH = 25;         // Exit with code 25
 
     // The protocol was terminated due to an issue with
@@ -738,13 +757,13 @@ message RequestOrigin {
     message User {
         // If available then provide any identity information MinKNOW
         // has about the client that made the RPC request
-        string identity = 1;
+        string identity = 1 [(may_contain_user_data) = true];
     }
     // A request from minknow will usually come in the form of something ending
     // naturally, or an error occurring where minknow has to take action
     message MinKNOW {
         // Optional further details on the cause of the request
-        string cause = 1;
+        string cause = 1 [(may_contain_user_data) = true];
     }
     // The protocol script/bream is mainly responsible for making changes via
     // protocol_phase_management
@@ -752,7 +771,7 @@ message RequestOrigin {
     // A request made by the run until script due to certain criteria being met
     message RunUntil {
         // What criteria caused the state change
-        string criteria = 1;
+        string criteria = 1 [(may_contain_user_data) = true];
     }
 
     oneof origin {
@@ -778,17 +797,9 @@ message ProtocolPhaseSnapshot {
     RequestOrigin origin = 3;
 }
 
-message Epi2meWorkflowReference {
-    // The unique identifier for a workflow ( unique to a specific instance of epi2me )
-    int64 id = 1;
-
-    // URL that links to the workflow report. Syntax for a local workflow: file:// otherwise: http(s)://
-    string url = 2;
-}
-
 message AssociatedPostProcessingAnalysis {
     // Id of analysis if this has been triggered (otherwise empty).
-    string started_id = 1;
+    string started_id = 1 [(may_contain_user_data) = false];
 
     // Start request for analysis
     basecaller.StartRequest start_request = 2;
@@ -809,7 +820,7 @@ message AssociatedPostProcessingAnalysis {
 
 message PlatformQcResult {
     // The flow cell id that the pqc was performed for
-    string flow_cell_id = 1;
+    string flow_cell_id = 1 [(may_contain_user_data) = false];
 
     // Whether the flow cell passed the platform qc check
     bool passed = 2;
@@ -819,6 +830,8 @@ message PlatformQcResult {
 }
 
 message HardwareCheckTemperatureResults {
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum HardwareCheckTemperatureFailureReason {
         // Not a hardware check protocol, or
         // Hardware check has not failed
@@ -855,6 +868,8 @@ message HardwareCheckTemperatureResults {
 }
 
 message HardwareCheckCalibrationResults {
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum HardwareCheckCalibrationFailureReason {
         // Not a hardware check protocol, or
         // Hardware check has not failed
@@ -881,6 +896,8 @@ message HardwareCheckCalibrationResults {
 }
 
 message HardwareCheckResult {
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum HardwareCheckStatus {
         // Not a hardware check protocol
         NONE = 0;
@@ -894,8 +911,13 @@ message HardwareCheckResult {
         // Hardware check failed
         // See HardwareCheckFailureReason for the reason
         Failed = 3;
+
+        // Hardware check was cancelled before completion
+        Cancelled = 4;
     }
 
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum HardwareCheckFailureReason {
         // Not a hardware check protocol, or
         // Hardware check has not failed
@@ -930,29 +952,40 @@ message HardwareCheckResult {
 message ExternalOffload {
     // The `id`s associated with active external data offloads associated with the protocol
     // The offload status can be queried using `mooneye.offload_manager.watch_offloads()``
-    repeated string offload_ids = 1;
+    repeated string offload_ids = 1 [(may_contain_user_data) = false];
 
     // An adapted version of mooneye.OffloadLocation
     //
     // Since 6.5
     message OffloadLocation {
         // unique id of this offload location (uuid)
-        google.protobuf.StringValue id = 1;
+        google.protobuf.StringValue id = 1 [(may_contain_user_data) = false];
 
         // name of this offload location
-        string name = 2;
+        string name = 2 [(may_contain_user_data) = true];
 
         // Path of directory to offload to
         // Each worker actually offloads to a unique directory generated at path
         // which is "OffloadLocation.path / OffloadWorker.id"
         // path is s3 bucket if LocationType.S3
-        string path = 3;
+        string path = 3 [(may_contain_user_data) = true];
 
+        // NOTE: needs to be kept up-to-date with
+        // mooneye_api/offload_manager.proto enum LocationType
+        // and ProtocolRecordTypes.cpp convert_location_type() reflected to match
+        //
         // Defines type of offload location
         enum LocationType {
+            // Local folder path, e.g. /data/my_local_offload_folder
             LOCATION_TYPE_LOCAL = 0;
+            // SCP (SSH), e.g. 10.160.81.28:/data/my_ssh_offload_folder
             LOCATION_TYPE_NETWORK = 1;
+            // S3 (or api-compatible service), e.g. s3://ont-exd-int-s3-euwest1-minknow-uploads
             LOCATION_TYPE_S3 = 2;
+            // Mounted USB drive path, e.g. /data/devices/Sabrent-SSD-p1/my_usb_offload_folder
+            LOCATION_TYPE_LOCAL_MOUNTED_USB_DRIVE = 3;
+            // Mounted network (NFS/SMB) drive path, e.g. /data/network/rex-nas2-data/my_nfs_offload_folder
+            LOCATION_TYPE_LOCAL_MOUNTED_NETWORK_DRIVE = 4;
         }
 
         // location type
@@ -971,7 +1004,7 @@ message GetVersionInfoResponse {
         int32 major = 1;
         int32 minor = 2;
         int32 patch = 3;
-        string full = 4;
+        string full = 4 [(may_contain_user_data) = false];
     }
 
     // What minknow version is installed. Split into major, minor and patch versions
@@ -988,13 +1021,13 @@ message GetVersionInfoResponse {
     // Prior to 5.0, this field was called "protocols".
     //
     // Since 5.0
-    string bream = 2;
+    string bream = 2 [(may_contain_user_data) = false];
 
     // Describes the distribution that this MinKNOW installation is part of, usually
     // this will be the Metapackage version number/identity, this will be "unknown"
     // if the distribution-version hasn't been set. This information is also communicated
     // in the Manager's DaemonMessage in daemon.proto
-    string distribution_version = 3;
+    string distribution_version = 3 [(may_contain_user_data) = false];
 
     enum DistributionStatus {
         UNKNOWN  = 0; // The distribution status is unknown or can not be determined
@@ -1016,7 +1049,7 @@ message GetVersionInfoResponse {
     // Prior to 5.0, this field was called "configuration".
     //
     // Since 5.0
-    string protocol_configuration = 5;
+    string protocol_configuration = 5 [(may_contain_user_data) = false];
 
     enum InstallationType {
         // For internal release. production.proto will be enabled for this type
@@ -1047,14 +1080,14 @@ message GetVersionInfoResponse {
     // Since 5.0
     // This field has been updated since 6.0
     reserved 7; // guppy_build_version
-    string basecaller_build_version = 9;
+    string basecaller_build_version = 9 [(may_contain_user_data) = false];
 
     // Version of the basecaller MinKNOW is running with.
     //
     // Since 5.0
     // This field has been updated since 6.0
     reserved 8; // guppy_connected_version
-    string basecaller_connected_version = 10;
+    string basecaller_connected_version = 10 [(may_contain_user_data) = false];
 }
 
 message AnalysisWorkflowInfo {
@@ -1064,13 +1097,13 @@ message AnalysisWorkflowInfo {
     // The workflow id of the started analysis workflow.
     //
     // May be empty if the workflow was unable to start
-    string workflow_id = 2;
+    string workflow_id = 2 [(may_contain_user_data) = false];
 
     // Human-readable name of the workflow.
-    string workflow_name = 3;
+    string workflow_name = 3 [(may_contain_user_data) = true];
 
     // What version the analysis workflow is running
-    string workflow_version = 4;
+    string workflow_version = 4 [(may_contain_user_data) = false];
 
     enum Status {
         // The default state if nothing has been set. Typically will never be set
@@ -1111,31 +1144,33 @@ message AnalysisWorkflowInfo {
      // a human readable error message describing why the workflow was stopped.
      //
      // For any other status, it is empty.
-    string workflow_stop_reason = 6;
+    string workflow_stop_reason = 6 [(may_contain_user_data) = false];
 
     // The main report(s) for the analysis workflow
     //
     // Indicates that the report(s) are able to be retrieved from the Reception server
-    repeated string report_names = 7;
+    repeated string report_names = 7 [(may_contain_user_data) = true];
 }
 
 message ProtocolRunInfo {
+    reserved 10; // epi2me workflows
+
     // The unique identifier assigned to this run.
     //
     // This is guaranteed to be made of ASCII characters, and at most 40 characters. It is globally
     // unique across all protocols runs on all MinKNOW instances.
-    string run_id = 1;
+    string run_id = 1 [(may_contain_user_data) = false];
 
     // The identifier of the protocol, as passed to start_protocol().
-    string protocol_id = 2;
+    string protocol_id = 2 [(may_contain_user_data) = false];
 
     // The arguments passed to start_protocol().
-    repeated string args = 3;
+    repeated string args = 3 [(may_contain_user_data) = true];
 
     // Any settings changed from the defaults specified in the protocol's .toml file.
     //
     // These settings were passed as part of begin_protocol()
-    map<string, protocol_settings.ProtocolSetting.ProtocolSettingValue> settings = 25;
+    map<string, protocol_settings.ProtocolSetting.ProtocolSettingValue> settings = 25 [(may_contain_user_data) = true];
 
     // Output location for protocol data (eg. reads).
     //
@@ -1143,7 +1178,7 @@ message ProtocolRunInfo {
     // this location will be output alongside the rest of the experiment data
     //
     // Since 1.16.
-    string output_path = 11;
+    string output_path = 11 [(may_contain_user_data) = true];
 
     // Output location to report to the user
     //
@@ -1156,7 +1191,7 @@ message ProtocolRunInfo {
     // reported to the user instead.
     //
     // Since 5.9
-    optional string reported_output_path = 24;
+    optional string reported_output_path = 24 [(may_contain_user_data) = true];
 
     // Indicates the current state of the protocol run.
     ProtocolState state = 4;
@@ -1235,17 +1270,12 @@ message ProtocolRunInfo {
 
     // A list of acquisition periods started whilst this protocol was running.
     //
-    repeated string acquisition_run_ids = 7;
+    repeated string acquisition_run_ids = 7 [(may_contain_user_data) = false];
 
     // User specified information associated with the protocol at start time.
     //
     // Since 1.11.
     ProtocolRunUserInfo user_info = 8;
-
-    // List of workflows from epi2me associated with this protocol
-    //
-    // Since 1.15.
-    repeated Epi2meWorkflowReference epi2me_workflows = 10;
 
     // Information about the device a protocol was started with
     //
@@ -1285,6 +1315,11 @@ message ProtocolRunInfo {
     //
     // Since 5.6
     GetVersionInfoResponse software_versions = 22;
+
+    // Can this protocol be restarted if the script exits with an error.
+    //
+    // Since 6.7
+    bool is_protocol_script_restartable = 29;
 }
 
 message FilteringInfo {
@@ -1308,7 +1343,11 @@ message FilteringInfo {
     // If either one matches, this will pass filtering.
     optional string flow_cell_id = 9;
 
-    message HardwareCheckFilter {}
+    message HardwareCheckFilter {
+        // Set to true to only return hardware check results that have a status of
+        // `SUCCEEDED` or `FAILED`.
+        optional bool only_succeeded_or_failed = 1;
+    }
 
     // Filter by runs that have hardware check results
     //
@@ -1425,15 +1464,6 @@ message SetProtocolPurposeResponse {
 
 }
 
-message AddEpi2meWorkflowRequest {
-    string run_id = 1 [(rpc_required) = true];
-
-    Epi2meWorkflowReference epi2me_workflow = 2 [(rpc_required) = true];
-}
-
-message AddEpi2meWorkflowResponse {
-}
-
 // timestamp for the last activity for experiment ordering
 // since 5.6
 message ProtocolGroupIdInfo {
@@ -1442,6 +1472,11 @@ message ProtocolGroupIdInfo {
     // Most recent start time for the protocol group id
     //
     google.protobuf.Timestamp start_time = 2;
+
+    // Whether the protocol group has its data pooled or not
+    // See `pool_output` in `ProtocolRunUserInfo` for more info
+    // since 6.7
+    bool pooled_output = 3;
 }
 
 message ListProtocolGroupIdsRequest {
@@ -1449,16 +1484,8 @@ message ListProtocolGroupIdsRequest {
 }
 
 message ListProtocolGroupIdsResponse {
-    // A list of protocol group ids used in any
-    // protocol started on this instance of minknow.
-    //
-    // deprecated and replaced by string protocol_group_id
-    // in message ProtocolGroupIdInfo
-    //
-    // string data is guaranteed to be ordered by most recent
-    // start time, since 5.6
-    //
-    repeated string protocol_group_ids = 1;
+    reserved "protocol_group_ids";
+    reserved 1;
 
     // A list of the most recent start time for each
     // protocol group id on this instance of minknow.
@@ -1658,4 +1685,24 @@ message GenerateRunReportResponse {
     // If include_input_data was set, how many further characters of input data remain
     // after this message (excluding of this message).
     int32 remaining_input_length = 5;
+}
+
+message WatchClearingHistoricDataRequest {}
+
+message ClearedHistoricData {
+    repeated string protocol_ids = 1;
+    repeated string acquisition_ids = 2;
+}
+
+message SetProtocolRestartableRequest {
+    // Protocol ID to flag as restartable.
+    //
+    // This protocol must currently be active.
+    string protocol_run_id = 1;
+
+    // Set the protocol script as restartable.
+    bool is_restartable = 2;
+}
+
+message SetProtocolRestartableResponse {
 }

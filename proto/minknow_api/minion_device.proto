@@ -59,6 +59,8 @@ message TemperatureRange {
 
 // These values control the sampling frequency.
 message SamplingFrequencyParameters {
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum ClockSpeed {
         CLOCK_128MHz = 0;
         CLOCK_64MHz = 1;
@@ -101,6 +103,8 @@ message MinionDeviceSettings {
         DECIMATION_64 = 2;
     }
 
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum LowPassFilter {
         LPF_KEEP = 0;
         LPF_5kHz = 1;
@@ -117,6 +121,8 @@ message MinionDeviceSettings {
         NOC_2_HS_CLOCK = 2;
     }
 
+    // Linting ignored for historical reasons.
+    // buf:lint:ignore ENUM_VALUE_UPPER_SNAKE_CASE
     enum IntegrationCapacitor {
         INTCAP_KEEP = 0;
         INTCAP_62_5fF = 1;
@@ -462,8 +468,17 @@ message MinionDeviceSettings {
     //
     // See ``enable_bias_voltage_lookup``.
     //
-    // Up to 75 values can be provided. The values have the same constraints as ``bias_voltage``.
+    // Up to 128 values can be provided. The values have the same constraints as ``bias_voltage``.
     repeated int32 bias_voltage_lookup_table = 27;
+
+    // The number of samples each lookup table entry is valid for.
+    //
+    // If this value is valid then precise waveform will be enabled for the values in the bias
+    // lookup table (must contain at least 2 entries). Set to zero if you want to disable this
+    // feature later - if left blank this property will remain unchanged.
+    //
+    // Must contain a value in the range [2, 64]
+    google.protobuf.UInt32Value samples_per_lut = 28;
 }
 
 message ChangeSettingsRequest {
