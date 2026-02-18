@@ -192,6 +192,7 @@ BarcodingArgs = collections.namedtuple(
         "kits",
         "trim_barcodes",
         "barcodes_both_ends",
+        "ignore_unspecified_barcodes",
     ],
 )
 AlignmentArgs = collections.namedtuple("AlignmentArgs", ["reference_files", "bed_file"])
@@ -340,6 +341,12 @@ def make_protocol_arguments(
                 barcoding_args.append(
                     "require_barcodes_both_ends="
                     + on_off(basecalling.barcoding.barcodes_both_ends)
+                )
+            if basecalling.barcoding.ignore_unspecified_barcodes:
+                # ignore_unspecified_barcodes=on/off
+                barcoding_args.append(
+                    "ignore_unspecified_barcodes="
+                    + on_off(basecalling.barcoding.ignore_unspecified_barcodes)
                 )
 
             protocol_args.extend(["--barcoding"] + barcoding_args)
