@@ -191,6 +191,11 @@ def parse_args():
         action="store_true",
         help="bar-code filtering (both ends of a strand must have a matching barcode)",
     )
+    parser.add_argument(
+        "--ignore-unspecified-barcodes",
+        action="store_true",
+        help="ignore unspecified barcodes",
+    )
 
     # ALIGNMENT ARGUMENTS
     parser.add_argument(
@@ -904,6 +909,7 @@ def main():
                 args.barcode_kits,
                 args.trim_barcodes,
                 args.barcodes_both_ends,
+                args.ignore_unspecified_barcodes,
             )
 
         if args.alignment_reference:
